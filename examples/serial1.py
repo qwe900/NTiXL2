@@ -1,4 +1,5 @@
 from serial import Serial
+from serial.tools import list_ports
 import sys
 
 reset = "*RST"
@@ -8,18 +9,14 @@ stop = "INIT STOP"
 mes = "MEAS:SLM:123? LAS"
 
 
-PORT  = "/dev/ttyACM0"
-def initiate_conn(port):
-    conn = Serial(port,9600,timeout=1)
-    print(conn)
-    return conn
+def find_port():
+    comlist = list(list_ports.comports())
+    if len(comlist):
+        XL2 = [(s1,s2,s3) for s1,s2,s3 in comlist if '1A2B:0004' in s3 ]
+    if len(XL2):
+        return XL2[0]
 
-if len(sys.argv)>1:
-    try:
-        PORT = sys.argv[1]
-        CONN = initiate_conn(PORT)
-    except:
-        pass
+
 
 
 def command(conn,c):
@@ -31,7 +28,7 @@ def command(conn,c):
         return l
 
 def to_mass_storage(CONN):
-    mess = "SYST:MSDMAC"
+    mass = "SYST:MSDMAC"
     command(CONN,mass)
     CONN.Close()
     return device
@@ -63,3 +60,9 @@ def mount_status():
 def reset_USB():
     import subprocess
     subprocess.Popen(["sudo","umount", mountDir])
+
+XL2 = find_port()
+
+if XL2 is not None:
+    PORT = XL2[0]
+    conn = Serial(PORT, 9600,timeout=1)

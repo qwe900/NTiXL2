@@ -5,7 +5,7 @@ setup(
       name='NTiXL2',
       version='1.0',
       description="NTI XL2 sound level meter seriel interface",
-      long_description=long_description,
+      long_description="""todo""",
       author='esr',
       author_email='',
       license='LICENSE',
