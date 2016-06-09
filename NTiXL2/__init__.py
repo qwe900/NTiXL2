@@ -1,2 +1,2 @@
 
-from NTiXL2 import xl2, message
+from NTiXL2 import xl2#, message
