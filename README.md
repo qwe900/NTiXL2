@@ -6,8 +6,8 @@ sound level meter.
 **Disclaimer**: This module is in development, and might break what you're working on.
 
 ## System requirements
+
 **linux**
-TODO
 
 - XL2Basic with device UUID
 - XYL2AutoDetect
@@ -15,13 +15,13 @@ TODO
 - **mass storage** name='XL2_SD-Card', id=0003: Der lärmessgerät verhält sich wie ein Speicher. 
 - **seriale verbindung**, name='XL2_Remote', id=0004  : Der lärmessgerät bietet eine seriale Schnittstelle. den device ist unten ttyACM zu finden
 
--The xl2 device name has to be:
+- The xl2 device name has to be:
 
-    - Fixed device name (`XL2`) if connected as serial device
-    - Fixed device name (`XL2-sd`) if connected as mass storage device
-    - automount to fixed path (`/media/XL2-sd`) if device connected as mass storage
+- Fixed device name (`XL2`) if connected as serial device
+- Fixed device name (`XL2-sd`) if connected as mass storage device
+- automount to fixed path (`/media/XL2-sd`) if device connected as mass storage
 
--Use udev rules to achieve this behaviour
+- Use udev rules to achieve this behaviour
 
 The mounting directory has to
 
@@ -29,6 +29,7 @@ The mounting directory has to
 `udev`
 
 ```bash
+sudo udev
 
 ```
 
@@ -50,7 +51,7 @@ Currently there are no packages available.
 
 The recommended method to install is to clone this repository
 
-`git clone git@github.com:python-acoustics/python-acoustics.git`
+`git clone https://github.com/e-sr/NTiXL2.git`
 
 and install this package in development mode
 
@@ -70,12 +71,9 @@ Examples can be found in the `examples` folder.
 
 ## Documentation
 
-Documentation can be found [online](http://python-acoustics.github.io/python-acoustics/).
+Documentation can be found [online](http://username.github.io/NTiXL2.).
 
 ## License
 
-`python-acoustics` is distributed under the BSD 3-clause license. See LICENSE for more information.
+The `ntixl2` package is distributed under the GPLv3 license. See LICENSE for more information.
 
-python  setup.py develop
-```
-# system requirements
