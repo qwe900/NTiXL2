@@ -71,7 +71,7 @@ Examples can be found in the `examples` folder.
 
 ## Documentation
 
-Documentation can be found [online](http://e-sr.github.io/NTiXL2).
+Documentation can be found [online](https://htmlpreview.github.io/?https://raw.githubusercontent.com/e-sr/NTiXL2/master/doc/_build/html/index.html).
 
 ## License
 
