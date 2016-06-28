@@ -31,8 +31,8 @@
 
   
     <link rel="top" title="NTiXL2 1 documentation" href="index.html"/>
-        <link rel="next" title="xl2 module" href="xl2.html"/>
-        <link rel="prev" title="NTiXl2’s documentation." href="index.html"/> 
+        <link rel="next" title="Parser Module" href="parser.html"/>
+        <link rel="prev" title="xl2 module" href="xl2.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -82,12 +82,22 @@
             
             
                 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="xl2.html">xl2 module</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">message module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#message-classes">Message Classes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#xl2-messages">Xl2 Messages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-message-classes">Basic message classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#xl2-messages">Xl2 Messages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#debug">Debug</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#device-status">Device Status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#initiate">Initiate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#measurement">Measurement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#input">Input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#calibrate">Calibrate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#system">System</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="xl2.html">xl2 module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="parser.html">Parser Module</a></li>
 </ul>
 
             
@@ -139,16 +149,13 @@ For more information about the remote measurement option of the XL2 device see
 the <a class="reference external" href="http://www.nti-audio.com/Portals/0/data/en/XL2-Remote-Measurement-Manual.pdf">manual</a> .</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p>There are two main different types of messages:</p>
-<blockquote>
-<div><ul class="simple">
-<li>Query messages with a return</li>
-<li>Messages without return</li>
-<li>XL2 messages and parameter are not case sensitive</li>
+<ul class="last simple">
+<li>There are <strong>Query</strong> messages by which the XL2 perform an <strong>answers</strong> and messages without an answers.</li>
+<li>There are messages with parameter and messages without parameters.</li>
+<li>A message has always a root message string. If the message has parameter the root string is followed by a   list (normally one) of parameter strings separated by spaces.</li>
+<li>XL2  root messages and parameter are not case sensitive</li>
+<li>The different types of messages are build on top of the <strong>Basic message classes</strong></li>
 </ul>
-</div></blockquote>
-<p class="last">There are messages that need a parameter, some of these messages can have a repetition of this parameter.s
-- For Query messages the XL2 sends an serial answers otherwise not. Exception is the <a class="reference internal" href="#ntixl2.message.SYSTEM_KEY" title="ntixl2.message.SYSTEM_KEY"><code class="xref py py-class docutils literal"><span class="pre">ntixl2.message.SYSTEM_KEY</span></code></a> message which return the status while finished to process keystrokes.</p>
 </div>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
@@ -161,12 +168,12 @@ the <a class="reference external" href="http://www.nti-audio.com/Portals/0/data/
 <div class="admonition-todo admonition" id="index-0">
 <p class="first admonition-title">Todo</p>
 <ul class="last simple">
-<li>Implement all messages</li>
+<li>Implement all messages: Input messages</li>
 <li>Tests</li>
 </ul>
 </div>
-<div class="section" id="message-classes">
-<h2>Message Classes<a class="headerlink" href="#message-classes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="basic-message-classes">
+<h2>Basic message classes<a class="headerlink" href="#basic-message-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="ntixl2.message.Message">
 <em class="property">class </em><code class="descclassname">ntixl2.message.</code><code class="descname">Message</code><a class="reference internal" href="_modules/ntixl2/message.html#Message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.Message" title="Permalink to this definition">¶</a></dt>
@@ -207,18 +214,16 @@ the <a class="reference external" href="http://www.nti-audio.com/Portals/0/data/
 </dd></dl>
 
 <dl class="method">
-<dt id="ntixl2.message.Message.parse_answers">
-<code class="descname">parse_answers</code><span class="sig-paren">(</span><em>lines</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/message.html#Message.parse_answers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.Message.parse_answers" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse XL2 answers.</p>
+<dt id="ntixl2.message.Message.to_str">
+<code class="descname">to_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/message.html#Message.to_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.Message.to_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the serial message</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>lines</strong> (<em>list</em>) &#8211; list containing XL2 answers lines to message</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">serial message string</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">dict containing contents (key, value) of XL2 answers</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
 </tr>
 </tbody>
 </table>
@@ -231,16 +236,18 @@ the <a class="reference external" href="http://www.nti-audio.com/Portals/0/data/
 </dd></dl>
 
 <dl class="method">
-<dt id="ntixl2.message.Message.to_str">
-<code class="descname">to_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/message.html#Message.to_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.Message.to_str" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the serial message</p>
+<dt id="ntixl2.message.Message.parse_answers">
+<code class="descname">parse_answers</code><span class="sig-paren">(</span><em>lines</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/message.html#Message.parse_answers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.Message.parse_answers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse XL2 answers.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">serial message string</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>lines</strong> (<em>list</em>) &#8211; list containing XL2 answers lines to message</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">dict containing contents (key, value) of XL2 answers</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
 </tr>
 </tbody>
 </table>
@@ -279,23 +286,25 @@ the <a class="reference external" href="http://www.nti-audio.com/Portals/0/data/
 </dd></dl>
 
 <dl class="method">
-<dt id="ntixl2.message.MessageWithParam.allowed_param_values">
-<code class="descname">allowed_param_values</code><span class="sig-paren">(</span><em>short=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/message.html#MessageWithParam.allowed_param_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.MessageWithParam.allowed_param_values" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return list of allowed parameter strings.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ntixl2.message.MessageWithParam.rm_param">
-<code class="descname">rm_param</code><span class="sig-paren">(</span><em>last=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/message.html#MessageWithParam.rm_param"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.MessageWithParam.rm_param" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove parameter value.</p>
+<dt id="ntixl2.message.MessageWithParam.to_str">
+<code class="descname">to_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/message.html#MessageWithParam.to_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.MessageWithParam.to_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the serial message</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>last</strong> (<em>bool</em>) &#8211; if  False remove all parameters from list else remove the last one.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">serial message string</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ntixl2.message.MessageWithParam.allowed_param_values">
+<code class="descname">allowed_param_values</code><span class="sig-paren">(</span><em>short=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/message.html#MessageWithParam.allowed_param_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.MessageWithParam.allowed_param_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return list of allowed parameter strings.</p>
 </dd></dl>
 
 <dl class="method">
@@ -317,16 +326,14 @@ the <a class="reference external" href="http://www.nti-audio.com/Portals/0/data/
 </dd></dl>
 
 <dl class="method">
-<dt id="ntixl2.message.MessageWithParam.to_str">
-<code class="descname">to_str</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/message.html#MessageWithParam.to_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.MessageWithParam.to_str" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the serial message</p>
+<dt id="ntixl2.message.MessageWithParam.rm_param">
+<code class="descname">rm_param</code><span class="sig-paren">(</span><em>last=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/message.html#MessageWithParam.rm_param"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.MessageWithParam.rm_param" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove parameter value.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">serial message string</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>last</strong> (<em>bool</em>) &#8211; if  False remove all parameters from list else remove the last one.</td>
 </tr>
 </tbody>
 </table>
@@ -362,6 +369,22 @@ the <a class="reference external" href="http://www.nti-audio.com/Portals/0/data/
 </div>
 <div class="section" id="xl2-messages">
 <h2>Xl2 Messages<a class="headerlink" href="#xl2-messages" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="debug">
+<h3>Debug<a class="headerlink" href="#debug" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="ntixl2.message.ECHO">
+<em class="property">class </em><code class="descclassname">ntixl2.message.</code><code class="descname">ECHO</code><a class="reference internal" href="_modules/ntixl2/message.html#ECHO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.ECHO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ntixl2.message.Message" title="ntixl2.message.Message"><code class="xref py py-class docutils literal"><span class="pre">ntixl2.message.Message</span></code></a></p>
+<p>Returns the ok after the command including separators. It is for debugging purpose only.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this implementation is not the same as the one in the <a class="reference external" href="http://www.nti-audio.com/Portals/0/data/en/XL2-Remote-Measurement-Manual.pdf">manual</a> .</p>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="device-status">
+<h3>Device Status<a class="headerlink" href="#device-status" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="ntixl2.message.QUERY_IDN">
 <em class="property">class </em><code class="descclassname">ntixl2.message.</code><code class="descname">QUERY_IDN</code><a class="reference internal" href="_modules/ntixl2/message.html#QUERY_IDN"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.QUERY_IDN" title="Permalink to this definition">¶</a></dt>
@@ -406,6 +429,9 @@ measuring. It is highly recommended to execute this command first to avoid unwan
 </div>
 </dd></dl>
 
+</div>
+<div class="section" id="initiate">
+<h3>Initiate<a class="headerlink" href="#initiate" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="ntixl2.message.INITIATE">
 <em class="property">class </em><code class="descclassname">ntixl2.message.</code><code class="descname">INITIATE</code><a class="reference internal" href="_modules/ntixl2/message.html#INITIATE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.INITIATE" title="Permalink to this definition">¶</a></dt>
@@ -421,6 +447,9 @@ measuring. It is highly recommended to execute this command first to avoid unwan
 <p>status: [STOPPED|FROZEN|SETTLING|RUNNING|PAUSED]</p>
 </dd></dl>
 
+</div>
+<div class="section" id="measurement">
+<h3>Measurement<a class="headerlink" href="#measurement" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="ntixl2.message.MEASURE_FUNCTION">
 <em class="property">class </em><code class="descclassname">ntixl2.message.</code><code class="descname">MEASURE_FUNCTION</code><a class="reference internal" href="_modules/ntixl2/message.html#MEASURE_FUNCTION"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.MEASURE_FUNCTION" title="Permalink to this definition">¶</a></dt>
@@ -435,6 +464,23 @@ measuring. It is highly recommended to execute this command first to avoid unwan
 <p>Queries the active measurement function.</p>
 </dd></dl>
 
+<dl class="class">
+<dt id="ntixl2.message.MEASURE_INITIATE">
+<em class="property">class </em><code class="descclassname">ntixl2.message.</code><code class="descname">MEASURE_INITIATE</code><a class="reference internal" href="_modules/ntixl2/message.html#MEASURE_INITIATE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.MEASURE_INITIATE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ntixl2.message.Message" title="ntixl2.message.Message"><code class="xref py py-class docutils literal"><span class="pre">ntixl2.message.Message</span></code></a></p>
+<p>Triggers a measurement.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="ntixl2.message.QUERY_MEAS_SLM_123">
+<em class="property">class </em><code class="descclassname">ntixl2.message.</code><code class="descname">QUERY_MEAS_SLM_123</code><a class="reference internal" href="_modules/ntixl2/message.html#QUERY_MEAS_SLM_123"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.QUERY_MEAS_SLM_123" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ntixl2.message.MessageWithParams" title="ntixl2.message.MessageWithParams"><code class="xref py py-class docutils literal"><span class="pre">ntixl2.message.MessageWithParams</span></code></a></p>
+<p>...</p>
+</dd></dl>
+
+</div>
+<div class="section" id="input">
+<h3>Input<a class="headerlink" href="#input" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="ntixl2.message.INPUT_SELECT">
 <em class="property">class </em><code class="descclassname">ntixl2.message.</code><code class="descname">INPUT_SELECT</code><a class="reference internal" href="_modules/ntixl2/message.html#INPUT_SELECT"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.INPUT_SELECT" title="Permalink to this definition">¶</a></dt>
@@ -459,6 +505,12 @@ measuring. It is highly recommended to execute this command first to avoid unwan
 <dd><p>Bases: <a class="reference internal" href="#ntixl2.message.Message" title="ntixl2.message.Message"><code class="xref py py-class docutils literal"><span class="pre">ntixl2.message.Message</span></code></a></p>
 </dd></dl>
 
+</div>
+<div class="section" id="calibrate">
+<h3>Calibrate<a class="headerlink" href="#calibrate" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="system">
+<h3>System<a class="headerlink" href="#system" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="ntixl2.message.QUERY_SYSTEM_ERROR">
 <em class="property">class </em><code class="descclassname">ntixl2.message.</code><code class="descname">QUERY_SYSTEM_ERROR</code><a class="reference internal" href="_modules/ntixl2/message.html#QUERY_SYSTEM_ERROR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.message.QUERY_SYSTEM_ERROR" title="Permalink to this definition">¶</a></dt>
@@ -539,6 +591,7 @@ mode. it is necessary to eject the disk.</p>
 
 </div>
 </div>
+</div>
 
 
            </div>
@@ -547,10 +600,10 @@ mode. it is necessary to eject the disk.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="xl2.html" class="btn btn-neutral float-right" title="xl2 module" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="parser.html" class="btn btn-neutral float-right" title="Parser Module" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral" title="NTiXl2’s documentation." accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="xl2.html" class="btn btn-neutral" title="xl2 module" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

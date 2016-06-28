@@ -81,8 +81,9 @@
             
             
                 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../message.html">message module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../xl2.html">xl2 module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../message.html">message module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xl2parser.html">XL2 Parser Module</a></li>
 </ul>
 
             
@@ -136,14 +137,17 @@
 
 <span class="sd">Note</span>
 <span class="sd">----</span>
-<span class="sd">There are two main different types of messages:</span>
 
-<span class="sd"> - Query messages with a return</span>
-<span class="sd"> - Messages without return</span>
-<span class="sd"> - XL2 messages and parameter are not case sensitive</span>
+<span class="sd">- There are **Query** messages by which the XL2 perform an **answers** and messages without an answers.</span>
 
-<span class="sd">There are messages that need a parameter, some of these messages can have a repetition of this parameter.s</span>
-<span class="sd">- For Query messages the XL2 sends an serial answers otherwise not. Exception is the :class:`ntixl2.message.SYSTEM_KEY` message which return the status while finished to process keystrokes.</span>
+<span class="sd">- There are messages with parameter and messages without parameters.</span>
+
+<span class="sd">- A message has always a root message string. If the message has parameter the root string is followed by a \</span>
+<span class="sd">  list (normally one) of parameter strings separated by spaces.</span>
+
+<span class="sd">- XL2  root messages and parameter are not case sensitive</span>
+
+<span class="sd">- The different types of messages are build on top of the **Basic message classes**</span>
 
 <span class="sd">Warnings</span>
 <span class="sd">-----</span>
@@ -153,7 +157,7 @@
 
 <span class="sd">Todo</span>
 <span class="sd">----</span>
-<span class="sd">- Implement all messages</span>
+<span class="sd">- Implement all messages: Input messages</span>
 <span class="sd">- Tests</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
@@ -163,7 +167,6 @@
 <span class="kn">import</span> <span class="nn">parse</span>
 
 <span class="c1">########### Messages ##############</span>
-
 
 <div class="viewcode-block" id="Message"><a class="viewcode-back" href="../../message.html#ntixl2.message.Message">[docs]</a><span class="k">class</span> <span class="nc">Message</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Basic XL2 serial message class</span>
@@ -454,10 +457,23 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">append_param</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
+<span class="c1">########################</span>
+<span class="c1"># Debug Mesages</span></div></div>
+<div class="viewcode-block" id="ECHO"><a class="viewcode-back" href="../../message.html#ntixl2.message.ECHO">[docs]</a><span class="k">class</span> <span class="nc">ECHO</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the ok after the command including separators. It is for debugging purpose only.</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    this implementation is not the same as the one in the manual_ .</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;Debug&quot;</span>
+    <span class="n">ROOT</span> <span class="o">=</span> <span class="s2">&quot;ECHO ok&quot;</span>
+    <span class="n">RETURN</span> <span class="o">=</span> <span class="s2">&quot;{string}&quot;</span>
 
 <span class="c1">########################</span>
 <span class="c1"># Device Status Messages</span>
-</div></div>
+</div>
 <div class="viewcode-block" id="QUERY_IDN"><a class="viewcode-back" href="../../message.html#ntixl2.message.QUERY_IDN">[docs]</a><span class="k">class</span> <span class="nc">QUERY_IDN</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Query the unique identification of the XL2.&quot;&quot;&quot;</span>
 
@@ -562,13 +578,13 @@
     <span class="n">RETURN</span> <span class="o">=</span> <span class="s2">&quot;{function}&quot;</span>
 
 </div>
-<span class="k">class</span> <span class="nc">MEASURE_INITIATE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+<div class="viewcode-block" id="MEASURE_INITIATE"><a class="viewcode-back" href="../../message.html#ntixl2.message.MEASURE_INITIATE">[docs]</a><span class="k">class</span> <span class="nc">MEASURE_INITIATE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Triggers a measurement.&quot;&quot;&quot;</span>
 
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;Measurement&quot;</span>
     <span class="n">ROOT</span> <span class="o">=</span> <span class="s2">&quot;MEAS:INIT&quot;</span>
 
-
+</div>
 <span class="k">class</span> <span class="nc">QUERY_MEASURE_TIMER</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Queries the actual measurement timer value.&quot;&quot;&quot;</span>
 
@@ -606,7 +622,7 @@
                                                                                             <span class="p">[</span><span class="s1">&#39;k2&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;BASE&#39;</span><span class="p">]]</span>
 
 
-<span class="k">class</span> <span class="nc">QUERY_MEAS_SLM_123</span><span class="p">(</span><span class="n">MessageWithParams</span><span class="p">):</span>
+<div class="viewcode-block" id="QUERY_MEAS_SLM_123"><a class="viewcode-back" href="../../message.html#ntixl2.message.QUERY_MEAS_SLM_123">[docs]</a><span class="k">class</span> <span class="nc">QUERY_MEAS_SLM_123</span><span class="p">(</span><span class="n">MessageWithParams</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;...&quot;&quot;&quot;</span>
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;Measurement&quot;</span>
     <span class="n">AVAILABILITY</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SLM&quot;</span><span class="p">]</span>
@@ -625,8 +641,8 @@
             <span class="n">ret</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ret</span>
 
-
-<span class="c1"># input messages</span>
+<span class="c1">################</span>
+<span class="c1"># input messages</span></div>
 <div class="viewcode-block" id="INPUT_SELECT"><a class="viewcode-back" href="../../message.html#ntixl2.message.INPUT_SELECT">[docs]</a><span class="k">class</span> <span class="nc">INPUT_SELECT</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="k">pass</span>
 

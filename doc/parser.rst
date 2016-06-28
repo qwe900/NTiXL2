@@ -1,4 +1,0 @@
-Parser Module
-***************
-
-.. automodule:: parser

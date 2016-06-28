@@ -11,10 +11,11 @@ Modules
 *******
 
 .. toctree::
-   :maxdepth: 2
+  :maxdepth: 2
 
-   message
-   xl2
+  xl2
+  message
+  xl2parser
 
 
 Indices and tables

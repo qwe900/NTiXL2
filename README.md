@@ -5,55 +5,17 @@ sound level meter.
 
 **Disclaimer**: This module is in development, and might break what you're working on.
 
+The module contains:
+
+ - a submodule `message` containing serial messages implementations
+ - a submodule `xl2` containing the XL2SLM object 
+ - a submodule `xl2parser` containing tools for parsing XL2 output data.
+
 ## System requirements
-The implementation is for linux systems only
 
-**systems requirements**
+The submodule `xl2` works only under linux systems. The requirements on  the system and on the XL2SLM  device are listed
+in the documentation of the **xl2 submodule**.
 
-
-1. **device file name**
-
-    the XL2 device can either be in serial mode or in mass storage mode. When the XL2 is plugged in to an usb port\
-    it can be detected using the device vendor-id `1a2b` and the device product-id  which is:
-        - `0003` if device in mass storage modus
-        - `0004` if device in serial mode
-
-    the :class:`ntixl2.xl2.XL2SLM` to work properly need  to known the device file created by the system under \
-    the `/dev/` folder for both XL2 mode. The **problem ist that the device filename can change** when the XL2 is\
-    plugged and unplugged. Using `udev` rules it is possible to create a fixed symlynk name which point\
-    to the correct device file.
-
-    **The symlink  device names for mass storage mode and serial mode are necessary parameter to be passed during class \
-    initiation.**
-
-2. **auto mounting**
-
-    the XL2 in mass storage mode should be auto mounted to a fixed path
-
-    **The path where the device is auto mounted is a necessary parameter to be passed during class initiation.**
-
-    `udev` rules can be used to achieve this behaviours.
-
-**`udev` rule example**
-
-``` bash
-    #! /bin/sh
-    
-    #######################################
-    #    USB Flash Drives automounting    #
-    #######################################
-    ENV{mount_options_vfat}="gid=100,dmask=000,fmask=111,utf8,flush,rw,noatime,users"
-    ENV{mntDir}="/media/XL2-sd"
-    
-    # start at sdb to ignore the system hard drive
-    ACTION == "add", KERNEL=="sd[b-z]?", ATTRS{idVendor}=="1a2b",ATTRS{idProduct}=="0003", GROUP="users", SYMLINK+="XL2-sd" ,RUN+="/bin/mkdir -p '%E{mntDir}'" ,RUN+="/bin/mount /dev/XL2-sd -t auto '%E{mntDir}'"
-    ACTION == "add", KERNEL=="ttyA*", ATTRS{idVendor}=="1a2b",ATTRS{idProduct}=="0004", GROUP="users", SYMLINK+="XL2"
-    
-    with this rule  we have the following parameter (default) to pass during class initiation:
-    - Fixed device name (`XL2`) if connected as serial device
-    - Fixed device name (`XL2-sd`) if connected as mass storage device
-    - automount to fixed path (`/media/XL2-sd`) if device connected as mass storage
-```
 ## Installation
 
 Currently there are no packages available.
@@ -85,4 +47,3 @@ Documentation can be found [online](https://htmlpreview.github.io/?https://raw.g
 ## License
 
 The `ntixl2` package is distributed under the GPLv3 license. See LICENSE for more information.
-

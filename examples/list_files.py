@@ -1,52 +1,16 @@
-from IPython import get_ipython
-import ntixl2
-from ntixl2.xl2 import XL2SLM
-from ntixl2.message import *
-import time
+"""
+Simple example of nti module usage
 
-ipython = get_ipython()
-ipython.magic('load_ext autoreload')
-ipython.magic('autoreload 1')
-ipython.magic('aimport NTiXL2')
+list data located on sd card of XL2SLM
+"""
+from ntixl2 import XL2SLM
 
-
-
-#####################
 # initiate XL" object
 xl2 = XL2SLM()
-print("device_status", xl2.device_status)
-print("IDN :", xl2.identification())
-print("measure Function :", xl2.serial_message(QUERY_MEASURE_FUNCTION()))
-print("INIT_STATE :", xl2.serial_message(QUERY_INITIATE_STATE()))
-print("Error :", xl2.check_errors())
-# Reset device and select profile RBL
-xl2.select_profile(profile=6)
-# unlock key
-xl2.klock()
-# profile sd path
-path = 'Projects/RBL'
-# query
-slmq = QUERY_MEAS_SLM_123()
-slmq.set_param('LZEQ')
+print("device_status: ", xl2.device_status)
+print("switch to device status to MASS", xl2.to_mass())
+folder = "Projects"
+print("list dir in {}/{} folder\n ".format(str(xl2.mountDir), folder), xl2.list_dir(folder))
+path = input("Please enter folder to list files: ")
+print("files: \n", "\n".join(xl2.list_files(folder +'/'+ path)))
 
-# #initiate state
-xl2.serial_message(INITIATE.START())
-# do measurement of sec length
-i = 0
-while i <= 120:
-    state = xl2.serial_message(QUERY_INITIATE_STATE())[ 'state' ]
-    print(state)
-    if state == 'RUNNING':
-        xl2.serial_message(MEASURE_INITIATE())
-        try:
-            r = xl2.serial_message(slmq)
-        except:
-            r = 'ERR'
-        print("seconds: {}; value: {}".format(i, r))
-        time.sleep(1)
-        i += 1
-    else:
-        time.sleep(0.1)
-#
-xl2.serial_message(INITIATE.STOP())
-print(xl2.serial_message(QUERY_INITIATE_STATE()))

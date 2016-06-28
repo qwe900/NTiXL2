@@ -2,13 +2,13 @@
 
 Note
 ----
-- The implementation is for linux systems only
+- **The implementation is for linux systems only**
 
 - **Systems requirements**
 
     1. **device file name**
 
-        the XL2 device can either be in serial mode or in mass storage mode. When the XL2 is plugged in to an usb port\
+        The XL2 device can either be in serial mode or in mass storage mode. When the XL2 is plugged in to an usb port\
         it can be detected using the device vendor-id `1a2b` and the device product-id  which is:
 
             - `0003` if device in mass storage modus
@@ -31,9 +31,12 @@ Note
         `udev` rules can be used to achieve this behaviours.
 
     3. **umount**
+
         to ummount the XL2 device and switch to serial mode ist necessary the linux bash command `Eject`.
 
     4. **`udev` rule example**
+
+        Information on `udev` rules can be found here<http://www.reactivated.net/writing_udev_rules.html>_ .
 
         .. code-block:: bash
 
@@ -49,14 +52,17 @@ Note
             ACTION == "add", KERNEL=="sd[b-z]?", ATTRS{idVendor}=="1a2b",ATTRS{idProduct}=="0003", GROUP="users", SYMLINK+="XL2-sd" ,RUN+="/bin/mkdir -p '%E{mntDir}'" ,RUN+="/bin/mount /dev/XL2-sd -t auto '%E{mntDir}'"
             ACTION == "add", KERNEL=="ttyA*", ATTRS{idVendor}=="1a2b",ATTRS{idProduct}=="0004", GROUP="users", SYMLINK+="XL2"
 
-        with this rule  we have the following parameter (default) to pass during class initiation:
+        With this rule  we have the following parameter (default) to pass during class initiation:
+
             - Fixed device name (`XL2`) if connected as serial device
             - Fixed device name (`XL2-sd`) if connected as mass storage device
             - automount to fixed path (`/media/XL2-sd`) if device connected as mass storage
 
 - **XL2 settings**
 
-    1. automatic switch to serial mode
+    1. automatic switch to serial mode when plugged in
+
+
 Todo
 ----
 - implement object for window usage too
@@ -73,7 +79,8 @@ import pathlib,shutil
 import psutil#, pyudev
 import serial
 from serial.tools import list_ports
-from .message import SYSTEM_MSDMAC,RESET, SYSTEM_KEY, QUERY_SYSTEM_ERROR, QUERY_IDN, SYSTEM_KLOCK, QUERY_INITIATE_STATE
+from .message import ECHO, SYSTEM_MSDMAC,RESET, SYSTEM_KEY, QUERY_SYSTEM_ERROR, QUERY_IDN, \
+    SYSTEM_KLOCK, QUERY_INITIATE_STATE
 
 class XL2Error(Exception):
     def __init__(self, value):
@@ -97,9 +104,9 @@ def safe_remove_mass_storage_device(device, mountDir):
     this function  need the `Eject` linux program
 
     """
-    subprocess.call("sudo umount -l {}".format(mountDir))
-    subprocess.call("sudo rmdir".format(mountDir))
-    subprocess.call("sudo eject {}".format(device))
+    subprocess.call(["sudo", "umount", "-l", mountDir])
+    subprocess.call(["sudo", "eject", device])
+    subprocess.call(["sudo", "rmdir", mountDir])
 
 
 class XL2SLM(object):
@@ -135,35 +142,64 @@ class XL2SLM(object):
         self.mountDir = pathlib.Path(mountDir)
         self.device_status
 
+    def _which_device(self):
+        #return which device is connected
+        try:
+            os.stat(self.serialDev)
+        except  FileNotFoundError:
+            pass
+        else:
+            return self.serialDev
+        # is mass storage device there?
+        try:
+            os.stat(self.storageDev)
+        except  FileNotFoundError:
+            pass
+        else:
+            return self.storageDev
+
+    def _conn_active(self):
+        # test if connection si active
+        mess = ECHO()
+        try:
+            self.conn.write((mess.to_str()).encode('ascii'))
+        except (serial.SerialException,AttributeError) as e:
+            return False
+        else:
+            try:
+                self.conn._timeout = 0.5
+                line = self.conn.readline().decode('UTF-8')
+            except serial.SerialException:
+                self.conn._timeout = 1
+                return False
+        self.conn._timeout = 1
+        return line == "deb" + mess.EOL
+
     @property
     def device_status(self):
-
         """ :obj:`str`: describing the device status. The status can be one of {'SERIAL'| 'MASS'}
 
-        Raise `ntixl2.xl2.XL2ERROR` if the status can't be defined.
+        Raise :class:`ntixl2.xl2.XL2ERROR` if the status can't be defined.
 
         """
-        try:
-            self.conn.inWaiting()
-        except:
-            dev = self._which_device()
-            if dev == self.serialDev:
-                try :
-                    self._init_serial_conn()
-                except serial.SerialException:
-                    raise XL2Error('Serial Error')
-                else:
-                    return 'SERIAL'
-            elif dev == self.storageDev:
-                mntStatus = True#
-                if mntStatus:
-                    return 'MASS'
-                else:
-                    raise XL2Error('Device not correct mounted')
+        # if self._conn_active():
+        #     return 'SERIAL'
+        # else:
+        dev = self._which_device()
+        if dev == self.serialDev:
+            try :
+                self.conn = serial.Serial(self.serialDev, baudrate=9600, timeout=1)
+            except serial.SerialException:
+                raise XL2Error('Serial Error, Not able to serial connect')
             else:
-                raise XL2Error('No XL2 device found')
+                return 'SERIAL'
+        elif dev == self.storageDev:
+            if True:
+                return 'MASS'
+            else:
+                raise XL2Error('Device not correct mounted')
         else:
-            return 'SERIAL'
+            raise XL2Error('No XL2 device found')
 
     # def _mount_status(self):
     #     disk = None
@@ -183,39 +219,11 @@ class XL2SLM(object):
     #     else:
     #         return {'mounted': False, 'path':''}
 
-    def _init_serial_conn(self):
-        # initiate the serial connection
-        try:
-            self.conn = serial.Serial(self.serialDev, baudrate=9600, timeout=10)
-        except serial.SerialException as e:
-            print('Not able to serial connect device {}'.format(self.serialDev))
-            raise e
-
-    def _which_device(self):
-        #return which device is connected
-        try:
-            os.stat(self.serialDev)
-        except  FileNotFoundError:
-            pass
-        else:
-            return self.serialDev
-        # is mass storage device there?
-        try:
-            os.stat(self.storageDev)
-        except  FileNotFoundError:
-            pass
-        else:
-            return self.storageDev
-
     def to_mass(self):
         """ Switch the device into MASS status.
 
         send a serial message to switch the XL2 device to "MASS" status.
 
-        Returns
-        -------
-        bool
-            if switch is successful *True* else *False*
 
         Note
         ----
@@ -226,52 +234,54 @@ class XL2SLM(object):
         :func:`ntixl2.xl2.safe_remove_mass_storage_device`
 
         """
-        if self.device_status == 'SERIAL':
+        status = self.device_status
+        if status == 'SERIAL':
             mess = SYSTEM_MSDMAC()
             try:
                 self.serial_message(mess)
             except serial.SerialException:
                 print("Serial connection is broken.")
-            success = False
-            i=0
+            self.conn.close()
+            success,i = False,0
             time.sleep(4)
             while not (success or i > 20):
                 i+=1
-                success = (self.device_status == 'MASS')
                 time.sleep(1)
-            return success
-        elif self.device_status == 'MASS':
+                try:
+                    status = self.device_status
+                except XL2Error:
+                    success = False
+                else:
+                    success = (status == 'MASS')
+        elif status == 'MASS':
             print("XL2 already in 'MASS' status ")
-            return True
 
     def to_serial(self):
         """ Switch the device into SERIAL status.
 
         switch is done by umount and eject the  XL2 device.
 
-        Returns
-        -------
-        bool
-            if switch is successful *True* else *False*
-
         Note
         ----
             The function is blocking till the switch is successful. This can take many seconds.
 
         """
-        if self.device_status == 'MASS':
-            safe_remove_mass_storage_device(self.storageDev)
-            success = False
-            i=0
-            time.sleep(2)
+        status = self.device_status
+        if status == 'MASS':
+            safe_remove_mass_storage_device(str(self.storageDev), str(self.mountDir))
+            success,i = False,0
+            time.sleep(3)
             while not (success or i > 20):
                 i+=1
-                success = (self.device_status == 'SERIAL')
                 time.sleep(1)
-            return success
-        elif self.device_status == 'SERIAL':
-            print(print("XL2 already in 'SERIAL' status "))
-            return True
+                try:
+                    status = self.device_status
+                except XL2Error:
+                    success = False
+                else:
+                    success = (status == 'SERIAL')
+        elif status == 'SERIAL':
+            print("XL2 already in 'SERIAL' status ")
 
 
     def memory_usage(self):
@@ -350,7 +360,7 @@ class XL2SLM(object):
     #     else:
     #         print('device_status has to be MASS.')
 
-    def serial_message(self, message, wait = 1):
+    def serial_message(self, message, wait = 5):
         """
 
         Parameters
@@ -373,23 +383,31 @@ class XL2SLM(object):
 
         if self.device_status == 'SERIAL':
             # write message
-            self.conn.write((message.to_str()).encode('UTF-8'))
+            self.conn.write((message.to_str()).encode('ascii'))
             # read returmn lines
             if message.RETURN is not None:
-                self.conn._timeout = 5
+                self.conn._timeout = wait
                 ret = []
                 for i in range(message.return_lines()):
-                    line = self.conn.readline().decode('UTF-8')
+                    line = self.conn.readline().decode('ascii')
                     assert not line == ""
                     ret.append(line)
-                return message.parse_answers(ret)
+                self.conn._timeout = 1
+                ret = message.parse_answers(ret)
             else:
                 # if message has no return raise error if there is a return
-                self.conn._timeout = wait
-                assert self.conn.readline().decode('UTF-8') == ""
-                return None
+                self.conn._timeout = 0.1
+                line = self.conn.readline().decode('ascii')
+                self.conn._timeout = 1
+                if not line == "":
+                    raise ValueError('message expect no return,answer is {}.'.format(line))
+                ret = None
+            self.conn.close()
+            return ret
+        else:
+            print('device_status has to be SERIAL')
 
-    def select_profile(self, profile=6):
+    def select_profile(self, profile=5):
         """ Reset device and load the wanted profile
 
         The profile number refer to the profile order in the profile Menu
@@ -470,9 +488,6 @@ class XL2SLM(object):
 
         """
         return self.serial_message(QUERY_IDN())
-
-    def measurement_status(self):
-        pass
 
 ### other functions
 

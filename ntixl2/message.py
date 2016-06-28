@@ -6,14 +6,17 @@ the manual_ .
 
 Note
 ----
-There are two main different types of messages:
 
- - Query messages with a return
- - Messages without return
- - XL2 messages and parameter are not case sensitive
+- There are **Query** messages by which the XL2 perform an **answers** and messages without an answers.
 
-There are messages that need a parameter, some of these messages can have a repetition of this parameter.s
-- For Query messages the XL2 sends an serial answers otherwise not. Exception is the :class:`ntixl2.message.SYSTEM_KEY` message which return the status while finished to process keystrokes.
+- There are messages with parameter and messages without parameters.
+
+- A message has always a root message string. If the message has parameter the root string is followed by a \
+  list (normally one) of parameter strings separated by spaces.
+
+- XL2  root messages and parameter are not case sensitive
+
+- The different types of messages are build on top of the **Basic message classes**
 
 Warnings
 -----
@@ -23,7 +26,7 @@ Warnings
 
 Todo
 ----
-- Implement all messages
+- Implement all messages: Input messages
 - Tests
 
 """
@@ -33,7 +36,6 @@ import itertools
 import parse
 
 ########### Messages ##############
-
 
 class Message(object):
     """Basic XL2 serial message class
@@ -192,7 +194,7 @@ class CategoricalParam(object):
         else:
             raise UserWarning('There are no param')
 
-    def param_list(self):
+    def parameter_list(self):
         """Return list of parameter names."""
         l = [self.allowedValues[i].value for i in self.param_list]
         if len(l):
@@ -324,6 +326,19 @@ class MessageWithParams(MessageWithParam):
         """
         self.param.append_param(value)
 
+########################
+# Debug Mesages
+class ECHO(Message):
+    """Returns the 'deb' after the command including separators. It is for debugging purpose only.
+
+    Note
+    ----
+    this implementation is not the same as the one in the manual_ .
+
+    """
+    GROUP = "Debug"
+    ROOT = "ECHO deb"
+    RETURN = "{string}"
 
 ########################
 # Device Status Messages
@@ -487,15 +502,15 @@ class QUERY_MEAS_SLM_123(MessageWithParams):
     ALLOWED_VALUES = [ParamValue(*p) for p in STATISTICS]
 
     def return_lines(self):
-        return len(self.param.to_list())
+        return len(self.param.parameter_list())
 
     def parse_answers(self, lines):
         ret = {}
-        for p, line in zip(self.param.to_list(), lines):
+        for p, line in zip(self.param.parameter_list(), lines):
             ret[p] = self._parse(line)
         return ret
 
-
+################
 # input messages
 class INPUT_SELECT(Message):
     pass
