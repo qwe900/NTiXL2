@@ -194,7 +194,7 @@ class XL2SLM(object):
             else:
                 return 'SERIAL'
         elif dev == self.storageDev:
-            mnt = self.mount_status()
+            mnt = self._mount_status()
             if mnt['mounted']:
                 return 'MASS'
             else:
@@ -202,7 +202,7 @@ class XL2SLM(object):
         else:
             raise XL2Error('No XL2 device found')
 
-    def mount_status(self):
+    def _mount_status(self):
         disk = None
         context = pyudev.Context()
         for i,d in enumerate(psutil.disk_partitions()):
@@ -298,7 +298,7 @@ class XL2SLM(object):
         if self.device_status == 'MASS':
             return shutil.disk_usage(self.mountDir.as_posix())
         else:
-            print('device_status has to be MASS.')
+            raise XL2Error('device_status has to be MASS.')
         
     def list_files(self, relPath='', filter = '*'):
         """list files
@@ -321,7 +321,7 @@ class XL2SLM(object):
             path = self.mountDir.joinpath(relPath)
             return [str(p) for p in path.glob(filter) if p.is_file()]
         else:
-            print('device_status has to be MASS.')
+            raise XL2Error('device_status has to be MASS.')
 
     def list_dir(self, relPath='', filter = '*'):
         """ list directories
@@ -345,7 +345,7 @@ class XL2SLM(object):
             path.glob(filter)
             return [str(p) for p in path.glob('*') if p.is_dir()]
         else:
-            print('device_status has to be MASS ')
+            raise XL2Error('device_status has to be MASS.')
 
     # def copy_file(self,filePath, wherePath = '/home/pi-rbl', filename = None):
     #     if self.device_status=='MASS':
@@ -406,7 +406,7 @@ class XL2SLM(object):
             self.conn.close()
             return ret
         else:
-            print('device_status has to be SERIAL')
+            raise XL2Error('device_status has to be SERIAL')
 
     def select_profile(self, profile=5):
         """ Reset device and load the wanted profile
@@ -435,6 +435,7 @@ class XL2SLM(object):
         r = self.serial_message(m)
         assert r['status'] == 'ok'
         time.sleep(5)
+
 
     def klock(self, locked = False):
         """Lock unlock XL2 keyboard
