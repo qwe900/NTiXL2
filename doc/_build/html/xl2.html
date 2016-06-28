@@ -84,7 +84,7 @@
 <li class="toctree-l1"><a class="reference internal" href="message.html">message module</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">xl2 module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#xl2slm-class">XL2SLM class</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#other">Other</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functions">Functions</a></li>
 </ul>
 </li>
 </ul>
@@ -133,75 +133,368 @@
             
   <div class="section" id="module-ntixl2.xl2">
 <span id="xl2-module"></span><h1>xl2 module<a class="headerlink" href="#module-ntixl2.xl2" title="Permalink to this headline">¶</a></h1>
-<p>The xl2.py module implement the XL2 object.</p>
-<p class="rubric">Notes</p>
-<p>The implementation is for linux systems with following requirements:</p>
-<p>-The xl2 device name has to be:</p>
+<p>The xl2.py module implement the XL2 device.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last">
+<li><p class="first">The implementation is for linux systems only</p>
+</li>
+<li><p class="first"><strong>Systems requirements</strong></p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first"><strong>device file name</strong></p>
+<blockquote>
+<div><p>the XL2 device can either be in serial mode or in mass storage mode. When the XL2 is plugged in to an usb port        it can be detected using the device vendor-id <cite>1a2b</cite> and the device product-id  which is:</p>
 <blockquote>
 <div><ul class="simple">
+<li><cite>0003</cite> if device in mass storage modus</li>
+<li><cite>0004</cite> if device in serial mode</li>
+</ul>
+</div></blockquote>
+<p>the <a class="reference internal" href="#ntixl2.xl2.XL2SLM" title="ntixl2.xl2.XL2SLM"><code class="xref py py-class docutils literal"><span class="pre">ntixl2.xl2.XL2SLM</span></code></a> to work properly need  to known the device file created by the system under         the <cite>/dev/</cite> folder for both XL2 mode. The <strong>problem ist that the device filename can change</strong> when the XL2 is        plugged and unplugged. Using <cite>udev</cite> rules it is possible to create a fixed symlynk name which point        to the correct device file.</p>
+<p><strong>The symlink  device names for mass storage mode and serial mode are necessary parameter to be passed during class         initiation.</strong></p>
+</div></blockquote>
+</li>
+<li><p class="first"><strong>auto mounting</strong></p>
+<blockquote>
+<div><p>the XL2 in mass storage mode should be auto mounted to a fixed path</p>
+<p><strong>The path where the device is auto mounted is a necessary parameter to be passed during class initiation.</strong></p>
+<p><cite>udev</cite> rules can be used to achieve this behaviours.</p>
+</div></blockquote>
+</li>
+<li><dl class="first docutils">
+<dt><strong>umount</strong></dt>
+<dd><p class="first last">to ummount the XL2 device and switch to serial mode ist necessary the linux bash command <cite>Eject</cite>.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first"><strong>`udev` rule example</strong></p>
+<blockquote>
+<div><div class="highlight-bash"><div class="highlight"><pre><span></span><span class="ch">#! /bin/sh</span>
+
+<span class="c1">#######################################</span>
+<span class="c1">#    USB Flash Drives automounting    #</span>
+<span class="c1">#######################################</span>
+ENV<span class="o">{</span>mount_options_vfat<span class="o">}=</span><span class="s2">&quot;gid=100,dmask=000,fmask=111,utf8,flush,rw,noatime,users&quot;</span>
+ENV<span class="o">{</span>mntDir<span class="o">}=</span><span class="s2">&quot;/media/XL2-sd&quot;</span>
+
+<span class="c1"># start at sdb to ignore the system hard drive</span>
+<span class="nv">ACTION</span> <span class="o">==</span> <span class="s2">&quot;add&quot;</span>, <span class="nv">KERNEL</span><span class="o">==</span><span class="s2">&quot;sd[b-z]?&quot;</span>, ATTRS<span class="o">{</span>idVendor<span class="o">}==</span><span class="s2">&quot;1a2b&quot;</span>,ATTRS<span class="o">{</span>idProduct<span class="o">}==</span><span class="s2">&quot;0003&quot;</span>, <span class="nv">GROUP</span><span class="o">=</span><span class="s2">&quot;users&quot;</span>, SYMLINK+<span class="o">=</span><span class="s2">&quot;XL2-sd&quot;</span> ,RUN+<span class="o">=</span><span class="s2">&quot;/bin/mkdir -p &#39;%E{mntDir}&#39;&quot;</span> ,RUN+<span class="o">=</span><span class="s2">&quot;/bin/mount /dev/XL2-sd -t auto &#39;%E{mntDir}&#39;&quot;</span>
+<span class="nv">ACTION</span> <span class="o">==</span> <span class="s2">&quot;add&quot;</span>, <span class="nv">KERNEL</span><span class="o">==</span><span class="s2">&quot;ttyA*&quot;</span>, ATTRS<span class="o">{</span>idVendor<span class="o">}==</span><span class="s2">&quot;1a2b&quot;</span>,ATTRS<span class="o">{</span>idProduct<span class="o">}==</span><span class="s2">&quot;0004&quot;</span>, <span class="nv">GROUP</span><span class="o">=</span><span class="s2">&quot;users&quot;</span>, SYMLINK+<span class="o">=</span><span class="s2">&quot;XL2&quot;</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>with this rule  we have the following parameter (default) to pass during class initiation:</dt>
+<dd><ul class="first last simple">
 <li>Fixed device name (<cite>XL2</cite>) if connected as serial device</li>
 <li>Fixed device name (<cite>XL2-sd</cite>) if connected as mass storage device</li>
 <li>automount to fixed path (<cite>/media/XL2-sd</cite>) if device connected as mass storage</li>
 </ul>
+</dd>
+</dl>
 </div></blockquote>
-<p>-Use udev rules to achieve this behaviour</p>
-<p>The mounting directory has to</p>
+</li>
+</ol>
+</div></blockquote>
+</li>
+<li><p class="first"><strong>XL2 settings</strong></p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>automatic switch to serial mode</li>
+</ol>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<ul class="last simple">
+<li>implement object for window usage too</li>
+<li>implement device detection in __init__ method using device <strong>uuid</strong> and without symlink</li>
+</ul>
+</div>
 <div class="section" id="xl2slm-class">
 <h2>XL2SLM class<a class="headerlink" href="#xl2slm-class" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="ntixl2.xl2.XL2SLM">
 <em class="property">class </em><code class="descclassname">ntixl2.xl2.</code><code class="descname">XL2SLM</code><span class="sig-paren">(</span><em>serialDev='/dev/XL2'</em>, <em>storageDev='/dev/XL2-sd'</em>, <em>mountDir='/media/XL2-sd'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM" title="Permalink to this definition">¶</a></dt>
-<dd><p>The XL2 device
-TODO:
-- implement system usiing pyudev  uuid, and not symbolic
-- implement system with pyudev using Monitor and observer</p>
+<dd><p>The XL2 device object.</p>
 <dl class="attribute">
-<dt id="ntixl2.xl2.XL2SLM.device_status">
-<code class="descname">device_status</code><a class="headerlink" href="#ntixl2.xl2.XL2SLM.device_status" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt><em>check device status and return one of the following device status</em> &#8211;  - SERIAL</dt>
-<dd><ul class="first last simple">
-<li>MASS</li>
-<li>MASS_NOT_MOUNT</li>
-<li>NO_DEVICE</li>
-<li>ERROR</li>
-</ul>
-</dd>
-</dl>
+<dt id="ntixl2.xl2.XL2SLM.serialDev">
+<code class="descname">serialDev</code><a class="headerlink" href="#ntixl2.xl2.XL2SLM.serialDev" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; device path in serial modus</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ntixl2.xl2.XL2SLM.storageDev">
+<code class="descname">storageDev</code><a class="headerlink" href="#ntixl2.xl2.XL2SLM.storageDev" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; device path in mass storage modus</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ntixl2.xl2.XL2SLM.mountDir">
+<code class="descname">mountDir</code><a class="headerlink" href="#ntixl2.xl2.XL2SLM.mountDir" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; directory path where device is automatically mounted</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ntixl2.xl2.XL2SLM.check_errors">
+<code class="descname">check_errors</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.check_errors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.check_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read the XL2 Error queue and return a list of errors</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">str status</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">list of errors</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="message.html#ntixl2.message.QUERY_SYSTEM_ERROR" title="ntixl2.message.QUERY_SYSTEM_ERROR"><code class="xref py py-class docutils literal"><span class="pre">ntixl2.message.QUERY_SYSTEM_ERROR</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ntixl2.xl2.XL2SLM.device_status">
+<code class="descname">device_status</code><a class="headerlink" href="#ntixl2.xl2.XL2SLM.device_status" title="Permalink to this definition">¶</a></dt>
+<dd><p><code class="xref py py-obj docutils literal"><span class="pre">str</span></code> &#8211; describing the device status. The status can be one of {&#8216;SERIAL&#8217;| &#8216;MASS&#8217;}</p>
+<p>Raise <cite>ntixl2.xl2.XL2ERROR</cite> if the status can&#8217;t be defined.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ntixl2.xl2.XL2SLM.identification">
+<code class="descname">identification</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.identification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.identification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the XL2 device identification data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">identification dict</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="message.html#ntixl2.message.QUERY_IDN" title="ntixl2.message.QUERY_IDN"><code class="xref py py-class docutils literal"><span class="pre">ntixl2.message.QUERY_IDN</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="ntixl2.xl2.XL2SLM.klock">
+<code class="descname">klock</code><span class="sig-paren">(</span><em>locked=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.klock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.klock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lock unlock XL2 keyboard</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>locked</strong> (<em>bool</em>) &#8211; if True lock keyboard else unlock</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="method">
+<dt id="ntixl2.xl2.XL2SLM.list_dir">
+<code class="descname">list_dir</code><span class="sig-paren">(</span><em>relPath=''</em>, <em>filter='*'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.list_dir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.list_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>list directories</p>
+<p>device_status has to be MASS</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>relPath</strong> (<em>str</em>) &#8211; path relative to mount directory</li>
+<li><strong>filter</strong> (<em>str</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">list of directory names</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ntixl2.xl2.XL2SLM.list_files">
+<code class="descname">list_files</code><span class="sig-paren">(</span><em>relPath=''</em>, <em>filter='*'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.list_files"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.list_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>list files</p>
+<p>device_status has to be MASS</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>relPath</strong> (<em>str</em>) &#8211; path relative to mount directory</li>
+<li><strong>filter</strong> (<em>str</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">list of files names</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ntixl2.xl2.XL2SLM.memory_usage">
+<code class="descname">memory_usage</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.memory_usage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.memory_usage" title="Permalink to this definition">¶</a></dt>
+<dd><p>memeory usage on the XL2 sd-card</p>
+<p>device_status has to be MASS</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">memeory usage on the XL2 sd-</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ntixl2.xl2.XL2SLM.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset the XL2 device</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="message.html#ntixl2.message.RESET" title="ntixl2.message.RESET"><code class="xref py py-class docutils literal"><span class="pre">ntixl2.message.RESET</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
 <dt id="ntixl2.xl2.XL2SLM.select_profile">
 <code class="descname">select_profile</code><span class="sig-paren">(</span><em>profile=6</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.select_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.select_profile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reset device and load profile number &#8216;profile&#8217;</p>
+<dd><p>Reset device and load the wanted profile</p>
+<p>The profile number refer to the profile order in the profile Menu</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>profile</strong> (<em>int</em>) &#8211; profile number. The profile number refer to the profile order in the profile menu.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The function wait for the &#8216;OK&#8217; status of the <a class="reference internal" href="message.html#ntixl2.message.SYSTEM_KEY" title="ntixl2.message.SYSTEM_KEY"><code class="xref py py-obj docutils literal"><span class="pre">ntixl2.message.SYSTEM_KEY</span></code></a> message. Another 5 seconds waiting to load the        profile</p>
+</div>
 </dd></dl>
 
 <dl class="method">
-<dt id="ntixl2.xl2.XL2SLM.to_MASS">
-<code class="descname">to_MASS</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.to_MASS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.to_MASS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Switch the device to MASS status sending a serial message. Return True if succesful.</p>
+<dt id="ntixl2.xl2.XL2SLM.serial_message">
+<code class="descname">serial_message</code><span class="sig-paren">(</span><em>message</em>, <em>wait=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.serial_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.serial_message" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>message</strong> (<a class="reference internal" href="message.html#ntixl2.message.Message" title="ntixl2.message.Message"><code class="xref py py-obj docutils literal"><span class="pre">ntixl2.message.Message</span></code></a> object) &#8211; </li>
+<li><strong>wait</strong> (<em>float</em>) &#8211; Connection timeout to wait for serial line read in case of message without expected answers.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">parsed message answers according to message object if message has answers. else <strong>None</strong>
+See <a class="reference internal" href="message.html#ntixl2.message.Message.parse_answers" title="ntixl2.message.Message.parse_answers"><code class="xref py py-meth docutils literal"><span class="pre">ntixl2.message.Message.parse_answers()</span></code></a></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">for messages with answers the connection read timeout is set to 5 seconds.</p>
+</div>
 </dd></dl>
 
 <dl class="method">
-<dt id="ntixl2.xl2.XL2SLM.to_SERIAL">
-<code class="descname">to_SERIAL</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.to_SERIAL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.to_SERIAL" title="Permalink to this definition">¶</a></dt>
-<dd><p>Switch the device to SERIAL status  by umount and eject the device. Return True if succesful.</p>
+<dt id="ntixl2.xl2.XL2SLM.to_mass">
+<code class="descname">to_mass</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.to_mass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.to_mass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Switch the device into MASS status.</p>
+<p>send a serial message to switch the XL2 device to &#8220;MASS&#8221; status.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">if switch is successful <em>True</em> else <em>False</em></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The function is blocking till the switch is successful. This can take many seconds.</p>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#ntixl2.xl2.safe_remove_mass_storage_device" title="ntixl2.xl2.safe_remove_mass_storage_device"><code class="xref py py-func docutils literal"><span class="pre">ntixl2.xl2.safe_remove_mass_storage_device()</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="ntixl2.xl2.XL2SLM.to_serial">
+<code class="descname">to_serial</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.to_serial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.XL2SLM.to_serial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Switch the device into SERIAL status.</p>
+<p>switch is done by umount and eject the  XL2 device.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">if switch is successful <em>True</em> else <em>False</em></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">bool</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The function is blocking till the switch is successful. This can take many seconds.</p>
+</div>
 </dd></dl>
 
 </dd></dl>
 
 </div>
-<div class="section" id="other">
-<h2>Other<a class="headerlink" href="#other" title="Permalink to this headline">¶</a></h2>
-<p>aaa</p>
+<div class="section" id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="ntixl2.xl2.safe_remove_mass_storage_device">
+<code class="descclassname">ntixl2.xl2.</code><code class="descname">safe_remove_mass_storage_device</code><span class="sig-paren">(</span><em>device</em>, <em>mountDir</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#safe_remove_mass_storage_device"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.xl2.safe_remove_mass_storage_device" title="Permalink to this definition">¶</a></dt>
+<dd><p>Umount and eject device</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>device</strong> (<em>str</em>) &#8211; device file path</li>
+<li><strong>mountDir</strong> (<em>str</em>) &#8211; device mount path</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">this function  need the <cite>Eject</cite> linux program</p>
+</div>
+</dd></dl>
+
 </div>
 </div>
 

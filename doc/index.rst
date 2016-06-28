@@ -16,14 +16,6 @@ Modules
    message
    xl2
 
-XL2 Sound Level Meter device class
-***************************
-
-.. automodule:: ntixl2.xl2
-.. autoclass:: ntixl2.XL2SLM
-   :members:
-
-
 
 Indices and tables
 ******************

@@ -6,45 +6,54 @@ sound level meter.
 **Disclaimer**: This module is in development, and might break what you're working on.
 
 ## System requirements
+The implementation is for linux systems only
 
-**linux**
+**systems requirements**
 
-- XL2Basic with device UUID
-- XYL2AutoDetect
 
-- **mass storage** name='XL2_SD-Card', id=0003: Der lärmessgerät verhält sich wie ein Speicher. 
-- **seriale verbindung**, name='XL2_Remote', id=0004  : Der lärmessgerät bietet eine seriale Schnittstelle. den device ist unten ttyACM zu finden
+1. **device file name**
 
-- The xl2 device name has to be:
+    the XL2 device can either be in serial mode or in mass storage mode. When the XL2 is plugged in to an usb port\
+    it can be detected using the device vendor-id `1a2b` and the device product-id  which is:
+        - `0003` if device in mass storage modus
+        - `0004` if device in serial mode
 
-- Fixed device name (`XL2`) if connected as serial device
-- Fixed device name (`XL2-sd`) if connected as mass storage device
-- automount to fixed path (`/media/XL2-sd`) if device connected as mass storage
+    the :class:`ntixl2.xl2.XL2SLM` to work properly need  to known the device file created by the system under \
+    the `/dev/` folder for both XL2 mode. The **problem ist that the device filename can change** when the XL2 is\
+    plugged and unplugged. Using `udev` rules it is possible to create a fixed symlynk name which point\
+    to the correct device file.
 
-- Use udev rules to achieve this behaviour
+    **The symlink  device names for mass storage mode and serial mode are necessary parameter to be passed during class \
+    initiation.**
 
-The mounting directory has to
+2. **auto mounting**
 
-### device recognition
-`udev`
+    the XL2 in mass storage mode should be auto mounted to a fixed path
 
-```bash
-sudo udev
+    **The path where the device is auto mounted is a necessary parameter to be passed during class initiation.**
 
+    `udev` rules can be used to achieve this behaviours.
+
+**`udev` rule example**
+
+``` bash
+    #! /bin/sh
+    
+    #######################################
+    #    USB Flash Drives automounting    #
+    #######################################
+    ENV{mount_options_vfat}="gid=100,dmask=000,fmask=111,utf8,flush,rw,noatime,users"
+    ENV{mntDir}="/media/XL2-sd"
+    
+    # start at sdb to ignore the system hard drive
+    ACTION == "add", KERNEL=="sd[b-z]?", ATTRS{idVendor}=="1a2b",ATTRS{idProduct}=="0003", GROUP="users", SYMLINK+="XL2-sd" ,RUN+="/bin/mkdir -p '%E{mntDir}'" ,RUN+="/bin/mount /dev/XL2-sd -t auto '%E{mntDir}'"
+    ACTION == "add", KERNEL=="ttyA*", ATTRS{idVendor}=="1a2b",ATTRS{idProduct}=="0004", GROUP="users", SYMLINK+="XL2"
+    
+    with this rule  we have the following parameter (default) to pass during class initiation:
+    - Fixed device name (`XL2`) if connected as serial device
+    - Fixed device name (`XL2-sd`) if connected as mass storage device
+    - automount to fixed path (`/media/XL2-sd`) if device connected as mass storage
 ```
-
-The implementation is for linux systems with following requirements:
-
-
-
-### automount device
-Wenn der Lärmmessgerät an RPI mit USB verbunden ist kann sich in zwei unterschiedliche Moden befinden:
-
-- **mass storage** name='XL2_SD-Card', id=0003: Der lärmessgerät verhält sich wie ein Speicher. 
-- **seriale verbindung**, name='XL2_Remote', id=0004  : Der lärmessgerät bietet eine seriale Schnittstelle. den device ist unten ttyACM zu finden
-
-In Beide fälle ist den gerät erkennbar durch ID_VENDOR=NTiAudio, ID_VENDOR_ENC=NTiAudio, ID_VENDOR_ID=1a2b
-
 ## Installation
 
 Currently there are no packages available.

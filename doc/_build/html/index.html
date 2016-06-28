@@ -134,83 +134,17 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="message.html">message module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="message.html#basic-message-classes">Basic Message Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="message.html#message-classes">Message Classes</a></li>
 <li class="toctree-l2"><a class="reference internal" href="message.html#xl2-messages">Xl2 Messages</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="xl2.html">xl2 module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="xl2.html#xl2slm-class">XL2SLM class</a></li>
-<li class="toctree-l2"><a class="reference internal" href="xl2.html#other">Other</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xl2.html#functions">Functions</a></li>
 </ul>
 </li>
 </ul>
 </div>
-</div>
-<div class="section" id="xl2-sound-level-meter-device-class">
-<h2>XL2 Sound Level Meter device class<a class="headerlink" href="#xl2-sound-level-meter-device-class" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-ntixl2.xl2"></span><p>The xl2.py module implement the XL2 object.</p>
-<p class="rubric">Notes</p>
-<p>The implementation is for linux systems with following requirements:</p>
-<p>-The xl2 device name has to be:</p>
-<blockquote>
-<div><ul class="simple">
-<li>Fixed device name (<cite>XL2</cite>) if connected as serial device</li>
-<li>Fixed device name (<cite>XL2-sd</cite>) if connected as mass storage device</li>
-<li>automount to fixed path (<cite>/media/XL2-sd</cite>) if device connected as mass storage</li>
-</ul>
-</div></blockquote>
-<p>-Use udev rules to achieve this behaviour</p>
-<p>The mounting directory has to</p>
-<dl class="class">
-<dt id="ntixl2.XL2SLM">
-<em class="property">class </em><code class="descclassname">ntixl2.</code><code class="descname">XL2SLM</code><span class="sig-paren">(</span><em>serialDev='/dev/XL2'</em>, <em>storageDev='/dev/XL2-sd'</em>, <em>mountDir='/media/XL2-sd'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.XL2SLM" title="Permalink to this definition">¶</a></dt>
-<dd><p>The XL2 device
-TODO:
-- implement system usiing pyudev  uuid, and not symbolic
-- implement system with pyudev using Monitor and observer</p>
-<dl class="attribute">
-<dt id="ntixl2.XL2SLM.device_status">
-<code class="descname">device_status</code><a class="headerlink" href="#ntixl2.XL2SLM.device_status" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt><em>check device status and return one of the following device status</em> &#8211;  - SERIAL</dt>
-<dd><ul class="first last simple">
-<li>MASS</li>
-<li>MASS_NOT_MOUNT</li>
-<li>NO_DEVICE</li>
-<li>ERROR</li>
-</ul>
-</dd>
-</dl>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">str status</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="ntixl2.XL2SLM.select_profile">
-<code class="descname">select_profile</code><span class="sig-paren">(</span><em>profile=6</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.select_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.XL2SLM.select_profile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reset device and load profile number &#8216;profile&#8217;</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ntixl2.XL2SLM.to_MASS">
-<code class="descname">to_MASS</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.to_MASS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.XL2SLM.to_MASS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Switch the device to MASS status sending a serial message. Return True if succesful.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="ntixl2.XL2SLM.to_SERIAL">
-<code class="descname">to_SERIAL</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ntixl2/xl2.html#XL2SLM.to_SERIAL"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ntixl2.XL2SLM.to_SERIAL" title="Permalink to this definition">¶</a></dt>
-<dd><p>Switch the device to SERIAL status  by umount and eject the device. Return True if succesful.</p>
-</dd></dl>
-
-</dd></dl>
-
 </div>
 <div class="section" id="indices-and-tables">
 <h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>

@@ -6,11 +6,11 @@ xl2 module
 XL2SLM class
 ************
 
-.. autoclass:: ntixl2.xl2.XL2SLM
+.. autoclass:: XL2SLM
    :members:
 
 
-Other
+Functions
 *****
 
-aaa
+.. autofunction:: safe_remove_mass_storage_device

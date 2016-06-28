@@ -5,32 +5,60 @@ message module
 
 .. automodule:: ntixl2.message
 
-Basic Message Classes
+Message Classes
 *********************
 
-There are two main different types of messages:
-
- - Query messages with a return
- - Messages without return
-
-There are messages that need a parameter, some of these messages can have a repetition of this parameter.
-
-.. autoclass:: ntixl2.message.Message
+.. autoclass:: Message
     :members:
 
-.. autoclass:: ntixl2.message.MessageWithParam
+.. autoclass:: MessageWithParam
     :show-inheritance:
     :members:
 
-.. autoclass:: ntixl2.message.MessageWithParams
+.. autoclass:: MessageWithParams
     :show-inheritance:
     :members:
 
 Xl2 Messages
 ************
 
-.. autoclass:: ntixl2.QUERY_IDN
+.. autoclass:: QUERY_IDN
     :show-inheritance:
-
-.. autoclass:: ntixl2.SYSTEM_MSDMAC
+.. autoclass:: RESET
+    :show-inheritance:
+.. autoclass:: INITIATE
+    :show-inheritance:
+.. autoclass:: QUERY_INITIATE_STATE
+    :show-inheritance:
+.. autoclass:: MEASURE_FUNCTION
+    :show-inheritance:
+.. autoclass:: QUERY_MEASURE_FUNCTION
+    :show-inheritance:
+.. autoclass:: INPUT_SELECT
+    :show-inheritance:
+.. autoclass:: QUERY_INPUT_SELECT
+    :show-inheritance:
+.. autoclass:: INPUT_RANGE
+    :show-inheritance:
+.. autoclass:: QUERY_INPUT_RANGE
+    :show-inheritance:
+.. .. autoclass:: INPUT_PHANTOM
+    :show-inheritance:
+.. .. autoclass:: QUERY_INPUT_PHANTOM
+    :show-inheritance:
+.. .. autoclass:: CALIBRATE_MIC_SENS_VALUE
+    :show-inheritance:
+.. .. autoclass:: QUERY_CALIBRATE_MIC_SENS_SOURCE
+    :show-inheritance:
+.. autoclass:: QUERY_SYSTEM_ERROR
+    :show-inheritance:
+.. autoclass:: SYSTEM_KEY
+    :show-inheritance:
+.. autoclass:: SYSTEM_KLOCK
+    :show-inheritance:
+.. autoclass:: QUERY_SYSTEM_KLOCK
+    :show-inheritance:
+.. autoclass:: QUERY_SYSTEM_OPTIONS
+    :show-inheritance:
+.. autoclass:: SYSTEM_MSDMAC
     :show-inheritance:
