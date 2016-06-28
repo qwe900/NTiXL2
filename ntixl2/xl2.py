@@ -76,7 +76,7 @@ import os
 import time
 import subprocess
 import pathlib,shutil
-import psutil#, pyudev
+import psutil, pyudev
 import serial
 from serial.tools import list_ports
 from .message import ECHO, SYSTEM_MSDMAC,RESET, SYSTEM_KEY, QUERY_SYSTEM_ERROR, QUERY_IDN, \
@@ -194,30 +194,31 @@ class XL2SLM(object):
             else:
                 return 'SERIAL'
         elif dev == self.storageDev:
-            if True:
+            mnt = self.mount_status()
+            if mnt['mounted']:
                 return 'MASS'
             else:
                 raise XL2Error('Device not correct mounted')
         else:
             raise XL2Error('No XL2 device found')
 
-    # def _mount_status(self):
-    #     disk = None
-    #     context = pyudev.Context()
-    #     for i,d in enumerate(psutil.disk_partitions()):
-    #         try:
-    #             device = pyudev.Device.from_device_file(context,d.device)
-    #         except pyudev.DeviceNotFoundByFileError:
-    #             pass
-    #         else:
-    #             links = list(device.device_links)
-    #             if self.storageDev in links:
-    #                 disk = d
-    #                 #print("Device 'XL2-sd'->{} , present.".format(d.device))
-    #     if disk is not None:
-    #         return {'mounted': True, 'path':disk.mountpoint, 'device_file':disk.device}
-    #     else:
-    #         return {'mounted': False, 'path':''}
+    def mount_status(self):
+        disk = None
+        context = pyudev.Context()
+        for i,d in enumerate(psutil.disk_partitions()):
+            try:
+                device = pyudev.Device.from_device_file(context,d.device)
+            except pyudev.DeviceNotFoundByFileError:
+                pass
+            else:
+                links = list(device.device_links)
+                if self.storageDev in links:
+                    disk = d
+                    #print("Device 'XL2-sd'->{} , present.".format(d.device))
+        if disk is not None:
+            return {'mounted': True, 'path':disk.mountpoint, 'device_file':disk.device}
+        else:
+            return {'mounted': False, 'path':''}
 
     def to_mass(self):
         """ Switch the device into MASS status.
