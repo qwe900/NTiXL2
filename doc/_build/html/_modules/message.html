@@ -83,7 +83,7 @@
                 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../xl2.html">xl2 module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../message.html">message module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../parser.html">Parser Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xl2parser.html">XL2 Parser Module</a></li>
 </ul>
 
             
@@ -137,14 +137,17 @@
 
 <span class="sd">Note</span>
 <span class="sd">----</span>
-<span class="sd">There are two main different types of messages:</span>
 
-<span class="sd"> - Query messages with a return</span>
-<span class="sd"> - Messages without return</span>
-<span class="sd"> - XL2 messages and parameter are not case sensitive</span>
+<span class="sd">- There are **Query** messages by which the XL2 perform an **answers** and messages without an answers.</span>
 
-<span class="sd">There are messages that need a parameter, some of these messages can have a repetition of this parameter.s</span>
-<span class="sd">- For Query messages the XL2 sends an serial answers otherwise not. Exception is the :class:`ntixl2.message.SYSTEM_KEY` message which return the status while finished to process keystrokes.</span>
+<span class="sd">- There are messages with parameter and messages without parameters.</span>
+
+<span class="sd">- A message has always a root message string. If the message has parameter the root string is followed by a \</span>
+<span class="sd">  list (normally one) of parameter strings separated by spaces.</span>
+
+<span class="sd">- XL2  root messages and parameter are not case sensitive</span>
+
+<span class="sd">- The different types of messages are build on top of the **Basic message classes**</span>
 
 <span class="sd">Warnings</span>
 <span class="sd">-----</span>
@@ -154,7 +157,7 @@
 
 <span class="sd">Todo</span>
 <span class="sd">----</span>
-<span class="sd">- Implement all messages</span>
+<span class="sd">- Implement all messages: Input messages</span>
 <span class="sd">- Tests</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
@@ -165,12 +168,11 @@
 
 <span class="c1">########### Messages ##############</span>
 
-
 <div class="viewcode-block" id="Message"><a class="viewcode-back" href="../message.html#message.Message">[docs]</a><span class="k">class</span> <span class="nc">Message</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Basic XL2 serial message class</span>
 
 <span class="sd">    The class has methods for the creation (:meth:`to_str`) of XL2 messages and methods\</span>
-<span class="sd">    for parsing (:meth:`parse_result_str`) the relative XL2 answers.</span>
+<span class="sd">    for parsing (:meth:`parse_answers`) the relative XL2 answers.</span>
 
 <span class="sd">    Note</span>
 <span class="sd">    -----</span>
@@ -202,10 +204,12 @@
 
 <div class="viewcode-block" id="Message.to_str"><a class="viewcode-back" href="../message.html#message.Message.to_str">[docs]</a>    <span class="k">def</span> <span class="nf">to_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return the serial message</span>
+
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        str</span>
 <span class="sd">            serial message string</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ROOT</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">EOL</span>
 </div>
@@ -225,7 +229,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">ret</span>
 
-<div class="viewcode-block" id="Message.parse_result_str"><a class="viewcode-back" href="../message.html#message.Message.parse_result_str">[docs]</a>    <span class="k">def</span> <span class="nf">parse_result_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
+<div class="viewcode-block" id="Message.parse_answers"><a class="viewcode-back" href="../message.html#message.Message.parse_answers">[docs]</a>    <span class="k">def</span> <span class="nf">parse_answers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Parse XL2 answers.</span>
 
 <span class="sd">        Parameters</span>
@@ -260,6 +264,7 @@
 <span class="sd">    Note</span>
 <span class="sd">    -----</span>
 <span class="sd">    Repetitions are allowed</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">allowedValues</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">repeatAllowed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -297,7 +302,10 @@
     <span class="k">def</span> <span class="nf">rm_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Remove parameters from list.</span>
 
-<span class="sd">        If &#39;last&#39; == True remove last element from parameter list</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        last : bool</span>
+<span class="sd">            If  True remove last element from parameter list else remove all elements</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">last</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">param_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_list</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -317,7 +325,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">UserWarning</span><span class="p">(</span><span class="s1">&#39;There are no param&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">param_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">parameter_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return list of parameter names.&quot;&quot;&quot;</span>
         <span class="n">l</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">allowedValues</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_list</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
@@ -353,7 +361,7 @@
             <span class="k">raise</span> <span class="ne">UserWarning</span><span class="p">(</span><span class="s1">&#39;There are no param&#39;</span><span class="p">)</span>
 
 
-<span class="k">class</span> <span class="nc">MessageWithParam</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+<div class="viewcode-block" id="MessageWithParam"><a class="viewcode-back" href="../message.html#message.MessageWithParam">[docs]</a><span class="k">class</span> <span class="nc">MessageWithParam</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;XL2 serial message class for messages with  single param.</span>
 
 <span class="sd">    Implement XL2  serial messages which need single parameter.</span>
@@ -387,24 +395,26 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Parameter type is not correct.&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">to_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="MessageWithParam.to_str"><a class="viewcode-back" href="../message.html#message.MessageWithParam.to_str">[docs]</a>    <span class="k">def</span> <span class="nf">to_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return the serial message</span>
+
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        str</span>
 <span class="sd">            serial message string</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">param</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">to_str</span><span class="p">()</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ROOT</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">param</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">EOL</span>
-
-    <span class="k">def</span> <span class="nf">allowed_param_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">short</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="MessageWithParam.allowed_param_values"><a class="viewcode-back" href="../message.html#message.MessageWithParam.allowed_param_values">[docs]</a>    <span class="k">def</span> <span class="nf">allowed_param_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">short</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return list of allowed parameter strings.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">short</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">PARAM_TYPE</span> <span class="o">==</span> <span class="s2">&quot;categorical&quot;</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">allowedValues</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">allowedValues</span>
-
-    <span class="k">def</span> <span class="nf">set_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="MessageWithParam.set_param"><a class="viewcode-back" href="../message.html#message.MessageWithParam.set_param">[docs]</a>    <span class="k">def</span> <span class="nf">set_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Set or overwrite parameter value</span>
 
 <span class="sd">        Note</span>
@@ -418,23 +428,22 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">set_param</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
-
-    <span class="k">def</span> <span class="nf">rm_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="MessageWithParam.rm_param"><a class="viewcode-back" href="../message.html#message.MessageWithParam.rm_param">[docs]</a>    <span class="k">def</span> <span class="nf">rm_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Remove parameter value.</span>
 
 <span class="sd">        Parameters</span>
-<span class="sd">        last : bool (False)</span>
-<span class="sd">            if last == False remove all parameters from list else remove the last one</span>
+<span class="sd">        ----------</span>
+<span class="sd">        last : bool</span>
+<span class="sd">            if  False remove all parameters from list else remove the last one.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">rm_param</span><span class="p">(</span><span class="n">last</span><span class="p">)</span>
 
-
-
-
-<span class="k">class</span> <span class="nc">MessageWithParams</span><span class="p">(</span><span class="n">MessageWithParam</span><span class="p">):</span>
+</div></div>
+<div class="viewcode-block" id="MessageWithParams"><a class="viewcode-back" href="../message.html#message.MessageWithParams">[docs]</a><span class="k">class</span> <span class="nc">MessageWithParams</span><span class="p">(</span><span class="n">MessageWithParam</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;XL2 serial message class for messages with repeated parameter&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">append_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<div class="viewcode-block" id="MessageWithParams.append_param"><a class="viewcode-back" href="../message.html#message.MessageWithParams.append_param">[docs]</a>    <span class="k">def</span> <span class="nf">append_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Append parameter to parameter list.</span>
 
 <span class="sd">        Note</span>
@@ -448,21 +457,34 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">append_param</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
+<span class="c1">########################</span>
+<span class="c1"># Debug Mesages</span></div></div>
+<div class="viewcode-block" id="ECHO"><a class="viewcode-back" href="../message.html#message.ECHO">[docs]</a><span class="k">class</span> <span class="nc">ECHO</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the &#39;deb&#39; after the command including separators. It is for debugging purpose only.</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    this implementation is not the same as the one in the manual_ .</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;Debug&quot;</span>
+    <span class="n">ROOT</span> <span class="o">=</span> <span class="s2">&quot;ECHO deb&quot;</span>
+    <span class="n">RETURN</span> <span class="o">=</span> <span class="s2">&quot;{string}&quot;</span>
 
 <span class="c1">########################</span>
 <span class="c1"># Device Status Messages</span>
-
-<span class="k">class</span> <span class="nc">QUERY_IDN</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="QUERY_IDN"><a class="viewcode-back" href="../message.html#message.QUERY_IDN">[docs]</a><span class="k">class</span> <span class="nc">QUERY_IDN</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Query the unique identification of the XL2.&quot;&quot;&quot;</span>
 
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;DeviceStatus&quot;</span>
     <span class="n">ROOT</span> <span class="o">=</span> <span class="s2">&quot;*IDN?&quot;</span>
     <span class="n">RETURN</span> <span class="o">=</span> <span class="s2">&quot;{manufacturer},{unit},{serialNumber},{FW_Version}&quot;</span>
-
-<span class="k">class</span> <span class="nc">RESET</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="RESET"><a class="viewcode-back" href="../message.html#message.RESET">[docs]</a><span class="k">class</span> <span class="nc">RESET</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Executes a device reset.</span>
 
-<span class="sd">    The RST command::</span>
+<span class="sd">    *The RST command:*</span>
 <span class="sd">        -  clears the error queue</span>
 <span class="sd">        -  stops any running measurement</span>
 <span class="sd">        -  stops any running script</span>
@@ -486,9 +508,7 @@
 <span class="sd">    Note</span>
 <span class="sd">    ----</span>
 <span class="sd">    Should be the first command when starting a remote session to ensure that all XL2 settings make sense for remote</span>
-<span class="sd">    measuring.</span>
-<span class="sd">    It is highly recommended to execute this command first to avoid unwanted side effects.</span>
-
+<span class="sd">    measuring. It is highly recommended to execute this command first to avoid unwanted side effects.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -498,8 +518,8 @@
 
 <span class="c1">##########################</span>
 <span class="c1"># Initialization Messages</span>
-
-<span class="k">class</span> <span class="nc">INITIATE</span><span class="p">(</span><span class="n">MessageWithParam</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="INITIATE"><a class="viewcode-back" href="../message.html#message.INITIATE">[docs]</a><span class="k">class</span> <span class="nc">INITIATE</span><span class="p">(</span><span class="n">MessageWithParam</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Starts/Stops a measurement&quot;&quot;&quot;</span>
 
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;InitiateSubsystem&quot;</span>
@@ -522,12 +542,11 @@
         <span class="n">instance</span><span class="o">.</span><span class="n">set_param</span><span class="p">(</span><span class="s2">&quot;STOP&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">instance</span>
 
-
-<span class="k">class</span> <span class="nc">QUERY_INITIATE_STATE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="QUERY_INITIATE_STATE"><a class="viewcode-back" href="../message.html#message.QUERY_INITIATE_STATE">[docs]</a><span class="k">class</span> <span class="nc">QUERY_INITIATE_STATE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Queries the run status of a measurement.</span>
 
-<span class="sd">    Device answer:</span>
-<span class="sd">        status: [STOPPED|FROZEN|SETTLING|RUNNING|PAUSED]</span>
+<span class="sd">    status: [STOPPED|FROZEN|SETTLING|RUNNING|PAUSED]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;InitiateSubsystem&quot;</span>
@@ -536,12 +555,12 @@
 
 
 <span class="c1">######################</span>
-<span class="c1"># Measurement Messages</span>
+<span class="c1"># Measurement Messages</span></div>
 <span class="n">FUNCTIONS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SLMeter&quot;</span><span class="p">,</span> <span class="s2">&quot;FFT&quot;</span><span class="p">,</span> <span class="s2">&quot;RT60&quot;</span><span class="p">,</span> <span class="s2">&quot;Polarity&quot;</span><span class="p">,</span> <span class="s2">&quot;Delay&quot;</span><span class="p">,</span> <span class="s2">&quot;RMS/THD&quot;</span><span class="p">,</span>
              <span class="s2">&quot;N.Rating&quot;</span><span class="p">,</span> <span class="s2">&quot;Scope&quot;</span><span class="p">,</span> <span class="s2">&quot;1/12Oct&quot;</span><span class="p">,</span> <span class="s2">&quot;STIPA&quot;</span><span class="p">,</span> <span class="s2">&quot;Calibrte&quot;</span><span class="p">,</span> <span class="s2">&quot;System&quot;</span><span class="p">]</span>
 
 
-<span class="k">class</span> <span class="nc">MEASURE_FUNCTION</span><span class="p">(</span><span class="n">MessageWithParam</span><span class="p">):</span>
+<div class="viewcode-block" id="MEASURE_FUNCTION"><a class="viewcode-back" href="../message.html#message.MEASURE_FUNCTION">[docs]</a><span class="k">class</span> <span class="nc">MEASURE_FUNCTION</span><span class="p">(</span><span class="n">MessageWithParam</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Set the active measurement function.&quot;&quot;&quot;</span>
 
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;Measurement&quot;</span>
@@ -550,22 +569,22 @@
     <span class="n">PARAM_TYPE</span> <span class="o">=</span> <span class="s1">&#39;categorical&#39;</span>
     <span class="n">ALLOWED_VALUES</span> <span class="o">=</span> <span class="p">[</span><span class="n">ParamValue</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;BASE&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">FUNCTIONS</span><span class="p">]</span>
 
-
-<span class="k">class</span> <span class="nc">QUERY_MEASURE_FUNCTION</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="QUERY_MEASURE_FUNCTION"><a class="viewcode-back" href="../message.html#message.QUERY_MEASURE_FUNCTION">[docs]</a><span class="k">class</span> <span class="nc">QUERY_MEASURE_FUNCTION</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Queries the active measurement function.&quot;&quot;&quot;</span>
 
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;Measurement&quot;</span>
     <span class="n">ROOT</span> <span class="o">=</span> <span class="s2">&quot;MEAS:FUNCTION?&quot;</span>
     <span class="n">RETURN</span> <span class="o">=</span> <span class="s2">&quot;{function}&quot;</span>
 
-
-<span class="k">class</span> <span class="nc">MEASURE_INITIATE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="MEASURE_INITIATE"><a class="viewcode-back" href="../message.html#message.MEASURE_INITIATE">[docs]</a><span class="k">class</span> <span class="nc">MEASURE_INITIATE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Triggers a measurement.&quot;&quot;&quot;</span>
 
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;Measurement&quot;</span>
     <span class="n">ROOT</span> <span class="o">=</span> <span class="s2">&quot;MEAS:INIT&quot;</span>
 
-
+</div>
 <span class="k">class</span> <span class="nc">QUERY_MEASURE_TIMER</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Queries the actual measurement timer value.&quot;&quot;&quot;</span>
 
@@ -603,7 +622,7 @@
                                                                                             <span class="p">[</span><span class="s1">&#39;k2&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;BASE&#39;</span><span class="p">]]</span>
 
 
-<span class="k">class</span> <span class="nc">QUERY_MEAS_SLM_123</span><span class="p">(</span><span class="n">MessageWithParams</span><span class="p">):</span>
+<div class="viewcode-block" id="QUERY_MEAS_SLM_123"><a class="viewcode-back" href="../message.html#message.QUERY_MEAS_SLM_123">[docs]</a><span class="k">class</span> <span class="nc">QUERY_MEAS_SLM_123</span><span class="p">(</span><span class="n">MessageWithParams</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;...&quot;&quot;&quot;</span>
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;Measurement&quot;</span>
     <span class="n">AVAILABILITY</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SLM&quot;</span><span class="p">]</span>
@@ -614,32 +633,32 @@
     <span class="n">ALLOWED_VALUES</span> <span class="o">=</span> <span class="p">[</span><span class="n">ParamValue</span><span class="p">(</span><span class="o">*</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">STATISTICS</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">return_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">to_list</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">parameter_list</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="nf">parse_result_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">parse_answers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">to_list</span><span class="p">(),</span> <span class="n">lines</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">parameter_list</span><span class="p">(),</span> <span class="n">lines</span><span class="p">):</span>
             <span class="n">ret</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ret</span>
 
-
-<span class="c1"># input messages</span>
-<span class="k">class</span> <span class="nc">INPUT_SELECT</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+<span class="c1">################</span>
+<span class="c1"># input messages</span></div>
+<div class="viewcode-block" id="INPUT_SELECT"><a class="viewcode-back" href="../message.html#message.INPUT_SELECT">[docs]</a><span class="k">class</span> <span class="nc">INPUT_SELECT</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="k">pass</span>
 
-
-<span class="k">class</span> <span class="nc">QUERY_INPUT_SELECT</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="QUERY_INPUT_SELECT"><a class="viewcode-back" href="../message.html#message.QUERY_INPUT_SELECT">[docs]</a><span class="k">class</span> <span class="nc">QUERY_INPUT_SELECT</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="k">pass</span>
 
-
-<span class="k">class</span> <span class="nc">INPUT_RANGE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="INPUT_RANGE"><a class="viewcode-back" href="../message.html#message.INPUT_RANGE">[docs]</a><span class="k">class</span> <span class="nc">INPUT_RANGE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="k">pass</span>
 
-
-<span class="k">class</span> <span class="nc">QUERY_INPUT_RANGE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="QUERY_INPUT_RANGE"><a class="viewcode-back" href="../message.html#message.QUERY_INPUT_RANGE">[docs]</a><span class="k">class</span> <span class="nc">QUERY_INPUT_RANGE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="k">pass</span>
 
-
+</div>
 <span class="k">class</span> <span class="nc">INPUT_PHANTOM</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="k">pass</span>
 
@@ -669,10 +688,10 @@
 <span class="k">class</span> <span class="nc">QUERY_CALIBRATE_MIC_SENS_SOURCE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Queries the source of the sensitivity value.</span>
 <span class="sd">    Device answer:</span>
-<span class="sd">        micSensytivitySource: [PLEASE CALIBRATE|USER CALIBRATED|MANUALLY|M2210 USER|M2210 FACTORY|M2210 CAL.CENTER|</span>
+<span class="sd">        micSensytivitySource:</span>
+<span class="sd">        [PLEASE CALIBRATE|USER CALIBRATED|MANUALLY|M2210 USER|M2210 FACTORY|M2210 CAL.CENTER|</span>
 <span class="sd">        M4260 USER|M4260 FACTORY|M4260 CAL.CENTER]</span>
 
-<span class="sd">    Details:</span>
 <span class="sd">    Returns the ASD microphone that was last connected as long as the microphone</span>
 <span class="sd">    sensitivity has not been changed manually or by remote command.</span>
 <span class="sd">    PLEASE CALIBRATE is returned when the sensitivity has never been set since the last</span>
@@ -702,8 +721,9 @@
 <span class="k">class</span> <span class="nc">QUERY_CALIBRATE_MIC_SENS_VALUE</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Queries the microphone sensitivity in V/Pa.</span>
 
-<span class="sd">    Device answer:</span>
-<span class="sd">        V,OK  float  100e-6 to 9.99 V/Pa</span>
+<span class="sd">    Device answer is:</span>
+
+<span class="sd">    V,OK  float  100e-6 to 9.99 V/Pa</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;Calibrate&quot;</span>
@@ -713,12 +733,32 @@
 
 <span class="c1">##################</span>
 <span class="c1"># System messages</span>
-<span class="k">class</span> <span class="nc">QUERY_SYSTEM_ERROR</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+<div class="viewcode-block" id="QUERY_SYSTEM_ERROR"><a class="viewcode-back" href="../message.html#message.QUERY_SYSTEM_ERROR">[docs]</a><span class="k">class</span> <span class="nc">QUERY_SYSTEM_ERROR</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Queries the error queue.</span>
 
-<span class="sd">    Note</span>
+<span class="sd">    *possible errors are:*</span>
+
+<span class="sd">    - -350: &quot;Error queue full - at least 2 errors lost&quot;,</span>
+<span class="sd">    - -115: &quot;Too many parameters in command&quot;,</span>
+<span class="sd">    - -113: &quot;Invalid command&quot;,</span>
+<span class="sd">    - -112: &quot;Too many characters in one of the command parts&quot;,</span>
+<span class="sd">    - -109: &quot;Missing command or parameter&quot;,</span>
+<span class="sd">    - -108: &quot;Invalid parameter&quot;,</span>
+<span class="sd">    - 0: &quot;no error (queue is empty)&quot;,</span>
+<span class="sd">    - 1: &quot;Command too long; too many characters without new line&quot;,</span>
+<span class="sd">    - 2: &quot;UNEXPECTED_PID&quot;,</span>
+<span class="sd">    - 3: &quot;DSP_TIMEOUT&quot;,</span>
+<span class="sd">    - 4: &quot;Changing microphone sensitivity is not possible when an ASD microphone is connected to the XL2&quot;,</span>
+<span class="sd">    - 5: &quot;Parameter not available, license not installed&quot;,</span>
+<span class="sd">    - 6: &quot;dt value does not exist for this parameter&quot;,</span>
+<span class="sd">    - 7: &quot;Parameter is not available in the current measurement function&quot;,</span>
+<span class="sd">    - 8: &quot;Unspecified DSP error&quot;,</span>
+<span class="sd">    - 9: &quot;Not valid, measurement is running&quot;</span>
+
+<span class="sd">    Attributes</span>
 <span class="sd">    -----</span>
-<span class="sd">    See class attribute ERRORS for a list of errors.</span>
+<span class="sd">    ERRORS : dict</span>
+<span class="sd">        dict of errors.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -744,15 +784,15 @@
         <span class="mi">9</span><span class="p">:</span> <span class="s2">&quot;Not valid, measurement is running&quot;</span>
     <span class="p">}</span>
 
-    <span class="k">def</span> <span class="nf">parse_result_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">parse_answers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
         <span class="n">line</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="p">(</span><span class="n">line</span><span class="p">)[</span><span class="s2">&quot;errList&quot;</span><span class="p">]</span>
         <span class="n">err_list</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ret</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
         <span class="k">return</span> <span class="p">[(</span><span class="n">err</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ERRORS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">err</span><span class="p">))</span> <span class="k">for</span> <span class="n">err</span> <span class="ow">in</span> <span class="n">err_list</span><span class="p">]</span>
 
-
-<span class="k">class</span> <span class="nc">SYSTEM_KEY</span><span class="p">(</span><span class="n">MessageWithParams</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="SYSTEM_KEY"><a class="viewcode-back" href="../message.html#message.SYSTEM_KEY">[docs]</a><span class="k">class</span> <span class="nc">SYSTEM_KEY</span><span class="p">(</span><span class="n">MessageWithParams</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Simulates a key stroke on the XL2&quot;&quot;&quot;</span>
 
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;System&quot;</span>
@@ -764,8 +804,8 @@
                        <span class="s2">&quot;PAUSE&quot;</span><span class="p">,</span> <span class="s2">&quot;SPEAKER&quot;</span><span class="p">,</span> <span class="s2">&quot;LIMIT&quot;</span><span class="p">,</span> <span class="s2">&quot;LIGHT&quot;</span><span class="p">]]</span>
     <span class="n">REPEAT_PARAM</span> <span class="o">=</span> <span class="mi">30</span>
 
-
-<span class="k">class</span> <span class="nc">SYSTEM_KLOCK</span><span class="p">(</span><span class="n">MessageWithParam</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="SYSTEM_KLOCK"><a class="viewcode-back" href="../message.html#message.SYSTEM_KLOCK">[docs]</a><span class="k">class</span> <span class="nc">SYSTEM_KLOCK</span><span class="p">(</span><span class="n">MessageWithParam</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Locks the keyboard of the XL2&quot;&quot;&quot;</span>
 
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;System&quot;</span>
@@ -787,57 +827,48 @@
         <span class="n">instance</span><span class="o">.</span><span class="n">set_param</span><span class="p">(</span><span class="s2">&quot;OFF&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">instance</span>
 
-
-<span class="k">class</span> <span class="nc">QUERY_SYSTEM_KLOCK</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Queries the key lock status.</span>
-
-<span class="sd">    Device answer:</span>
-<span class="sd">        [ON|OFF]</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
+</div>
+<div class="viewcode-block" id="QUERY_SYSTEM_KLOCK"><a class="viewcode-back" href="../message.html#message.QUERY_SYSTEM_KLOCK">[docs]</a><span class="k">class</span> <span class="nc">QUERY_SYSTEM_KLOCK</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Queries the key lock status&quot;&quot;&quot;</span>
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;System&quot;</span>
     <span class="n">ROOT</span> <span class="o">=</span> <span class="s2">&quot;SYST:KLOC?&quot;</span>
     <span class="n">RETURN</span> <span class="o">=</span> <span class="s2">&quot;{keyLock}&quot;</span>
 
-
-<span class="k">class</span> <span class="nc">QUERY_SYSTEM_OPTIONS</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Queries the installed options.</span>
-
-<span class="sd">    Device answer:</span>
-<span class="sd">        list of installed options</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
+</div>
+<div class="viewcode-block" id="QUERY_SYSTEM_OPTIONS"><a class="viewcode-back" href="../message.html#message.QUERY_SYSTEM_OPTIONS">[docs]</a><span class="k">class</span> <span class="nc">QUERY_SYSTEM_OPTIONS</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Queries the installed options.&quot;&quot;&quot;</span>
 
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;System&quot;</span>
     <span class="n">ROOT</span> <span class="o">=</span> <span class="s2">&quot;SYST:OPTI?&quot;</span>
     <span class="n">RETURN</span> <span class="o">=</span> <span class="s2">&quot;{optList}&quot;</span>
 
-    <span class="k">def</span> <span class="nf">parse_result_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">parse_answers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
         <span class="n">line</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse</span><span class="p">(</span><span class="n">line</span><span class="p">)[</span><span class="s2">&quot;optList&quot;</span><span class="p">]</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ret</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
 
-
-<span class="k">class</span> <span class="nc">SYSTEM_MSDMAC</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="SYSTEM_MSDMAC"><a class="viewcode-back" href="../message.html#message.SYSTEM_MSDMAC">[docs]</a><span class="k">class</span> <span class="nc">SYSTEM_MSDMAC</span><span class="p">(</span><span class="n">Message</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Switches the XL2 to the USB mass storage mode for Mac and Linux.</span>
 
-<span class="sd">    Note</span>
-<span class="sd">    -----</span>
-<span class="sd">    Connection is closed after command.Use this Command on Mac and Linux instead of “SYSTem:MSD”, otherwise MSD will</span>
+<span class="sd">    Use this Command on Mac and Linux instead of “SYSTem:MSD”, otherwise MSD will</span>
 <span class="sd">    timeout after 2 minutes and the XL2 returns to COM mode.</span>
 <span class="sd">    After sending this command, the XL2 drops the COM connection (no more remote</span>
 <span class="sd">    commands are possible) and switches to mass storage mode. The host then has full</span>
 <span class="sd">    access to the data stored on the SD card of the XL2.</span>
 <span class="sd">    To return to COM mode eject the XL2 drive from the host computer.</span>
-<span class="sd">    Attention: If you unmount the XL2 drive by the host, the XL2 will not return to COM</span>
-<span class="sd">    mode</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    If you umount the XL2 drive by the host, the XL2 will not return to COM</span>
+<span class="sd">    mode. it is necessary to eject the disk.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">GROUP</span> <span class="o">=</span> <span class="s2">&quot;System&quot;</span>
     <span class="n">ROOT</span> <span class="o">=</span> <span class="s2">&quot;SYST:MSDMAC&quot;</span>
-</pre></div>
+</pre></div></div>
 
            </div>
           </div>

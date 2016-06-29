@@ -1,0 +1,27 @@
+XL2 Sound Level Meter Broadband Reporting:		RBL\2016-06-28_SLM_002_123_Rpt_Report.txt                                      
+------------------------------------------
+
+
+# Hardware Configuration
+	Device Info:    	XL2, SNo. A2A-10242-E0, FW3.03
+	Mic Type:       	NTi Audio M2230, SNo. 5494, User calibrated 2016-06-22  08:12
+	Mic Sensitivity:	38.2 mV/Pa
+
+# Measurement Setup
+	Profile:        	RBL
+	Append mode:    	OFF
+	Timer mode:     	repeat
+	Timer set:      	00:01:00
+	k1:             	0.0 dB
+	k2:             	0.0 dB
+	kset Date:      	k-Values not measured
+	Range:          	20 - 120 dB
+
+# Broadband Results
+	Start       	          	Stop        	          
+	Date        	Time      	Date        	Time      	LAeq    	LCPKmax 	LAFmax  	LAFmin  	LZSmax  	LZeq    
+	[YYYY-MM-DD]	[hh:mm:ss]	[YYYY-MM-DD]	[hh:mm:ss]	[dB]    	[dB]    	[dB]    	[dB]    	[dB]    	[dB]    
+	2016-06-28  	20:05:08  	2016-06-28  	20:06:08  	30.8    	64.2    	44.1    	26.4    	59.1    	54.9    
+	2016-06-28  	20:06:08  	2016-06-28  	20:07:08  	31.2    	66.6    	43.9    	27.3    	64.7    	56.0    
+	2016-06-28  	20:07:08  	2016-06-28  	20:08:08  	32.5    	68.3    	49.7    	26.7    	62.7    	58.0    
+	2016-06-28  	20:08:08  	2016-06-28  	20:08:14  	35.7    	72.9    	45.6    	27.4    	60.5    	59.4    

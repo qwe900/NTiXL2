@@ -1,7 +1,7 @@
 xl2 module
 ==========
 
-.. automodule:: ntixl2.xl2
+.. automodule:: xl2
 
 XL2SLM class
 ************

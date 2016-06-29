@@ -174,13 +174,18 @@
 <span class="sd">            #! /bin/sh</span>
 
 <span class="sd">            #######################################</span>
-<span class="sd">            #    USB Flash Drives automounting    #</span>
+<span class="sd">            #    XL2SLM device rules              #</span>
 <span class="sd">            #######################################</span>
-<span class="sd">            ENV{mount_options_vfat}=&quot;gid=100,dmask=000,fmask=111,utf8,flush,rw,noatime,users&quot;</span>
-<span class="sd">            ENV{mntDir}=&quot;/media/XL2-sd&quot;</span>
 
+<span class="sd">            # Symlink &#39;XL2-sd&#39; and auto mount if device mass storage mode</span>
+<span class="sd">            #############################################################</span>
+<span class="sd">            #mounting point</span>
+<span class="sd">            ENV{mntDir}=&quot;/media/XL2-sd&quot;</span>
 <span class="sd">            # start at sdb to ignore the system hard drive</span>
 <span class="sd">            ACTION == &quot;add&quot;, KERNEL==&quot;sd[b-z]?&quot;, ATTRS{idVendor}==&quot;1a2b&quot;,ATTRS{idProduct}==&quot;0003&quot;, GROUP=&quot;users&quot;, SYMLINK+=&quot;XL2-sd&quot; ,RUN+=&quot;/bin/mkdir -p &#39;%E{mntDir}&#39;&quot; ,RUN+=&quot;/bin/mount /dev/XL2-sd -t auto &#39;%E{mntDir}&#39;&quot;</span>
+
+<span class="sd">            # Symlink &#39;XL2&#39; if device in serial mode</span>
+<span class="sd">            ########################################</span>
 <span class="sd">            ACTION == &quot;add&quot;, KERNEL==&quot;ttyA*&quot;, ATTRS{idVendor}==&quot;1a2b&quot;,ATTRS{idProduct}==&quot;0004&quot;, GROUP=&quot;users&quot;, SYMLINK+=&quot;XL2&quot;</span>
 
 <span class="sd">        With this rule  we have the following parameter (default) to pass during class initiation:</span>
@@ -193,13 +198,10 @@
 
 <span class="sd">    1. automatic switch to serial mode when plugged in</span>
 
-
 <span class="sd">Todo</span>
 <span class="sd">----</span>
 <span class="sd">- implement object for window usage too</span>
 <span class="sd">- implement device detection in __init__ method using device **uuid** and without symlink</span>
-
-
 
 <span class="sd">&quot;&quot;&quot;</span>
 
@@ -277,7 +279,7 @@
         <span class="c1">#return which device is connected</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serialDev</span><span class="p">)</span>
-        <span class="k">except</span>  <span class="n">FileNotFoundError</span><span class="p">:</span>
+        <span class="k">except</span> <span class="n">FileNotFoundError</span><span class="p">:</span>
             <span class="k">pass</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">serialDev</span>
@@ -293,15 +295,18 @@
         <span class="c1"># test if connection si active</span>
         <span class="n">mess</span> <span class="o">=</span> <span class="n">ECHO</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">write</span><span class="p">((</span><span class="n">mess</span><span class="o">.</span><span class="n">to_str</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">))</span>
-        <span class="k">except</span> <span class="n">serial</span><span class="o">.</span><span class="n">SerialException</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">write</span><span class="p">((</span><span class="n">mess</span><span class="o">.</span><span class="n">to_str</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">serial</span><span class="o">.</span><span class="n">SerialException</span><span class="p">,</span><span class="ne">AttributeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">False</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="mf">0.5</span>
                 <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">)</span>
             <span class="k">except</span> <span class="n">serial</span><span class="o">.</span><span class="n">SerialException</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="mi">1</span>
                 <span class="k">return</span> <span class="bp">False</span>
-        <span class="k">return</span> <span class="n">line</span> <span class="o">==</span> <span class="s2">&quot;ok&quot;</span> <span class="o">+</span> <span class="n">mess</span><span class="o">.</span><span class="n">EOL</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">line</span> <span class="o">==</span> <span class="s2">&quot;deb&quot;</span> <span class="o">+</span> <span class="n">mess</span><span class="o">.</span><span class="n">EOL</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">device_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -310,42 +315,43 @@
 <span class="sd">        Raise :class:`ntixl2.xl2.XL2ERROR` if the status can&#39;t be defined.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn_active</span><span class="p">():</span>
-            <span class="k">return</span> <span class="s1">&#39;SERIAL&#39;</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">dev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_which_device</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">dev</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">serialDev</span><span class="p">:</span>
-                <span class="k">try</span> <span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">conn</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serialDev</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">9600</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="k">except</span> <span class="n">serial</span><span class="o">.</span><span class="n">SerialException</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">XL2Error</span><span class="p">(</span><span class="s1">&#39;Serial Error, Not able to serial connect&#39;</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="s1">&#39;SERIAL&#39;</span>
-            <span class="k">elif</span> <span class="n">dev</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">storageDev</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">True</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="s1">&#39;MASS&#39;</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">XL2Error</span><span class="p">(</span><span class="s1">&#39;Device not correct mounted&#39;</span><span class="p">)</span>
+        <span class="c1"># if self._conn_active():</span>
+        <span class="c1">#     return &#39;SERIAL&#39;</span>
+        <span class="c1"># else:</span>
+        <span class="n">dev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_which_device</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">dev</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">serialDev</span><span class="p">:</span>
+            <span class="k">try</span> <span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">conn</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">serialDev</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">9600</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">serial</span><span class="o">.</span><span class="n">SerialException</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">XL2Error</span><span class="p">(</span><span class="s1">&#39;Serial Error, Not able to serial connect&#39;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">XL2Error</span><span class="p">(</span><span class="s1">&#39;No XL2 device found&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s1">&#39;SERIAL&#39;</span>
+        <span class="k">elif</span> <span class="n">dev</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">storageDev</span><span class="p">:</span>
+            <span class="n">mnt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mount_status</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">mnt</span><span class="p">[</span><span class="s1">&#39;mounted&#39;</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="s1">&#39;MASS&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">XL2Error</span><span class="p">(</span><span class="s1">&#39;Device not correct mounted&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">XL2Error</span><span class="p">(</span><span class="s1">&#39;No XL2 device found&#39;</span><span class="p">)</span>
 
-    <span class="c1"># def _mount_status(self):</span>
-    <span class="c1">#     disk = None</span>
-    <span class="c1">#     context = pyudev.Context()</span>
-    <span class="c1">#     for i,d in enumerate(psutil.disk_partitions()):</span>
-    <span class="c1">#         try:</span>
-    <span class="c1">#             device = pyudev.Device.from_device_file(context,d.device)</span>
-    <span class="c1">#         except pyudev.DeviceNotFoundByFileError:</span>
-    <span class="c1">#             pass</span>
-    <span class="c1">#         else:</span>
-    <span class="c1">#             links = list(device.device_links)</span>
-    <span class="c1">#             if self.storageDev in links:</span>
-    <span class="c1">#                 disk = d</span>
-    <span class="c1">#                 #print(&quot;Device &#39;XL2-sd&#39;-&gt;{} , present.&quot;.format(d.device))</span>
-    <span class="c1">#     if disk is not None:</span>
-    <span class="c1">#         return {&#39;mounted&#39;: True, &#39;path&#39;:disk.mountpoint, &#39;device_file&#39;:disk.device}</span>
-    <span class="c1">#     else:</span>
-    <span class="c1">#         return {&#39;mounted&#39;: False, &#39;path&#39;:&#39;&#39;}</span>
+    <span class="k">def</span> <span class="nf">_mount_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">disk</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="c1"># context = pyudev.Context()</span>
+        <span class="c1"># for i,d in enumerate(psutil.disk_partitions()):</span>
+        <span class="c1">#     try:</span>
+        <span class="c1">#         device = pyudev.Device.from_device_file(context,d.device)</span>
+        <span class="c1">#     except pyudev.DeviceNotFoundByFileError:</span>
+        <span class="c1">#         pass</span>
+        <span class="c1">#     else:</span>
+        <span class="c1">#         links = list(device.device_links)</span>
+        <span class="c1">#         if self.storageDev in links:</span>
+        <span class="c1">#             disk = d</span>
+        <span class="c1">#             #print(&quot;Device &#39;XL2-sd&#39;-&gt;{} , present.&quot;.format(d.device))</span>
+        <span class="k">if</span> <span class="n">disk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;mounted&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">,</span> <span class="s1">&#39;path&#39;</span><span class="p">:</span><span class="n">disk</span><span class="o">.</span><span class="n">mountpoint</span><span class="p">,</span> <span class="s1">&#39;device_file&#39;</span><span class="p">:</span><span class="n">disk</span><span class="o">.</span><span class="n">device</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;mounted&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">,</span> <span class="s1">&#39;path&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">}</span>
 
 <div class="viewcode-block" id="XL2SLM.to_mass"><a class="viewcode-back" href="../../xl2.html#ntixl2.xl2.XL2SLM.to_mass">[docs]</a>    <span class="k">def</span> <span class="nf">to_mass</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Switch the device into MASS status.</span>
@@ -425,7 +431,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device_status</span> <span class="o">==</span> <span class="s1">&#39;MASS&#39;</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">shutil</span><span class="o">.</span><span class="n">disk_usage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mountDir</span><span class="o">.</span><span class="n">as_posix</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s1">&#39;device_status has to be MASS.&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">XL2Error</span><span class="p">(</span><span class="s1">&#39;device_status has to be MASS.&#39;</span><span class="p">)</span>
         </div>
 <div class="viewcode-block" id="XL2SLM.list_files"><a class="viewcode-back" href="../../xl2.html#ntixl2.xl2.XL2SLM.list_files">[docs]</a>    <span class="k">def</span> <span class="nf">list_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relPath</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nb">filter</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;list files</span>
@@ -448,7 +454,7 @@
             <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mountDir</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">relPath</span><span class="p">)</span>
             <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_file</span><span class="p">()]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s1">&#39;device_status has to be MASS.&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">XL2Error</span><span class="p">(</span><span class="s1">&#39;device_status has to be MASS.&#39;</span><span class="p">)</span>
 </div>
 <div class="viewcode-block" id="XL2SLM.list_dir"><a class="viewcode-back" href="../../xl2.html#ntixl2.xl2.XL2SLM.list_dir">[docs]</a>    <span class="k">def</span> <span class="nf">list_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relPath</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nb">filter</span> <span class="o">=</span> <span class="s1">&#39;*&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; list directories</span>
@@ -472,7 +478,7 @@
             <span class="n">path</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="nb">filter</span><span class="p">)</span>
             <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s1">&#39;device_status has to be MASS &#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">XL2Error</span><span class="p">(</span><span class="s1">&#39;device_status has to be MASS.&#39;</span><span class="p">)</span>
 
     <span class="c1"># def copy_file(self,filePath, wherePath = &#39;/home/pi-rbl&#39;, filename = None):</span>
     <span class="c1">#     if self.device_status==&#39;MASS&#39;:</span>
@@ -488,7 +494,7 @@
     <span class="c1">#     else:</span>
     <span class="c1">#         print(&#39;device_status has to be MASS.&#39;)</span>
 </div>
-<div class="viewcode-block" id="XL2SLM.serial_message"><a class="viewcode-back" href="../../xl2.html#ntixl2.xl2.XL2SLM.serial_message">[docs]</a>    <span class="k">def</span> <span class="nf">serial_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">wait</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="XL2SLM.serial_message"><a class="viewcode-back" href="../../xl2.html#ntixl2.xl2.XL2SLM.serial_message">[docs]</a>    <span class="k">def</span> <span class="nf">serial_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">wait</span> <span class="o">=</span> <span class="mi">5</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">        Parameters</span>
@@ -511,26 +517,31 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device_status</span> <span class="o">==</span> <span class="s1">&#39;SERIAL&#39;</span><span class="p">:</span>
             <span class="c1"># write message</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">write</span><span class="p">((</span><span class="n">message</span><span class="o">.</span><span class="n">to_str</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">write</span><span class="p">((</span><span class="n">message</span><span class="o">.</span><span class="n">to_str</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">))</span>
             <span class="c1"># read returmn lines</span>
             <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">RETURN</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="mi">5</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="n">wait</span>
                 <span class="n">ret</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">return_lines</span><span class="p">()):</span>
-                    <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">)</span>
+                    <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
                     <span class="k">assert</span> <span class="ow">not</span> <span class="n">line</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span>
                     <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="mi">1</span>
-                <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">parse_answers</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+                <span class="n">ret</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">parse_answers</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># if message has no return raise error if there is a return</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="n">wait</span>
-                <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;UTF-8&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="mf">0.1</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;ascii&#39;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="mi">1</span>
-                <span class="k">assert</span> <span class="n">line</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span>
-                <span class="k">return</span> <span class="bp">None</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;message expect no return,answer is {}.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+                <span class="n">ret</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">ret</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">XL2Error</span><span class="p">(</span><span class="s1">&#39;device_status has to be SERIAL&#39;</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="XL2SLM.select_profile"><a class="viewcode-back" href="../../xl2.html#ntixl2.xl2.XL2SLM.select_profile">[docs]</a>    <span class="k">def</span> <span class="nf">select_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="mi">6</span><span class="p">):</span>
+<div class="viewcode-block" id="XL2SLM.select_profile"><a class="viewcode-back" href="../../xl2.html#ntixl2.xl2.XL2SLM.select_profile">[docs]</a>    <span class="k">def</span> <span class="nf">select_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Reset device and load the wanted profile</span>
 
 <span class="sd">        The profile number refer to the profile order in the profile Menu</span>
@@ -557,6 +568,7 @@
         <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">serial_message</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;ok&#39;</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+
 </div>
 <div class="viewcode-block" id="XL2SLM.klock"><a class="viewcode-back" href="../../xl2.html#ntixl2.xl2.XL2SLM.klock">[docs]</a>    <span class="k">def</span> <span class="nf">klock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">locked</span> <span class="o">=</span> <span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Lock unlock XL2 keyboard</span>
@@ -611,12 +623,9 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">serial_message</span><span class="p">(</span><span class="n">QUERY_IDN</span><span class="p">())</span>
-</div>
-    <span class="k">def</span> <span class="nf">measurement_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
 
 <span class="c1">### other functions</span>
-</div>
+</div></div>
 <span class="k">def</span> <span class="nf">find_xl2</span><span class="p">(</span><span class="n">linux</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span> <span class="s2">&quot;XL2&quot;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    listet alle vorhandene serielle Ports welches Gerät Beschreibung enthalten die string  &#39;filter&#39;</span>

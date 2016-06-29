@@ -1,9 +1,7 @@
 message module
 ==============
 
-.. inheritance-diagram:: ntixl2.message
-
-.. automodule:: ntixl2.message
+.. automodule:: message
 
 Basic message classes
 *********************

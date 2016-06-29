@@ -43,13 +43,18 @@ Note
             #! /bin/sh
 
             #######################################
-            #    USB Flash Drives automounting    #
+            #    XL2SLM device rules              #
             #######################################
-            ENV{mount_options_vfat}="gid=100,dmask=000,fmask=111,utf8,flush,rw,noatime,users"
-            ENV{mntDir}="/media/XL2-sd"
 
+            # Symlink 'XL2-sd' and auto mount if device mass storage mode
+            #############################################################
+            #mounting point
+            ENV{mntDir}="/media/XL2-sd"
             # start at sdb to ignore the system hard drive
             ACTION == "add", KERNEL=="sd[b-z]?", ATTRS{idVendor}=="1a2b",ATTRS{idProduct}=="0003", GROUP="users", SYMLINK+="XL2-sd" ,RUN+="/bin/mkdir -p '%E{mntDir}'" ,RUN+="/bin/mount /dev/XL2-sd -t auto '%E{mntDir}'"
+
+            # Symlink 'XL2' if device in serial mode
+            ########################################
             ACTION == "add", KERNEL=="ttyA*", ATTRS{idVendor}=="1a2b",ATTRS{idProduct}=="0004", GROUP="users", SYMLINK+="XL2"
 
         With this rule  we have the following parameter (default) to pass during class initiation:
@@ -62,13 +67,10 @@ Note
 
     1. automatic switch to serial mode when plugged in
 
-
 Todo
 ----
 - implement object for window usage too
 - implement device detection in __init__ method using device **uuid** and without symlink
-
-
 
 """
 
@@ -76,7 +78,7 @@ import os
 import time
 import subprocess
 import pathlib,shutil
-import psutil, pyudev
+import psutil#, pyudev
 import serial
 from serial.tools import list_ports
 from .message import ECHO, SYSTEM_MSDMAC,RESET, SYSTEM_KEY, QUERY_SYSTEM_ERROR, QUERY_IDN, \
@@ -146,7 +148,7 @@ class XL2SLM(object):
         #return which device is connected
         try:
             os.stat(self.serialDev)
-        except  FileNotFoundError:
+        except FileNotFoundError:
             pass
         else:
             return self.serialDev
@@ -204,17 +206,17 @@ class XL2SLM(object):
 
     def _mount_status(self):
         disk = None
-        context = pyudev.Context()
-        for i,d in enumerate(psutil.disk_partitions()):
-            try:
-                device = pyudev.Device.from_device_file(context,d.device)
-            except pyudev.DeviceNotFoundByFileError:
-                pass
-            else:
-                links = list(device.device_links)
-                if self.storageDev in links:
-                    disk = d
-                    #print("Device 'XL2-sd'->{} , present.".format(d.device))
+        # context = pyudev.Context()
+        # for i,d in enumerate(psutil.disk_partitions()):
+        #     try:
+        #         device = pyudev.Device.from_device_file(context,d.device)
+        #     except pyudev.DeviceNotFoundByFileError:
+        #         pass
+        #     else:
+        #         links = list(device.device_links)
+        #         if self.storageDev in links:
+        #             disk = d
+        #             #print("Device 'XL2-sd'->{} , present.".format(d.device))
         if disk is not None:
             return {'mounted': True, 'path':disk.mountpoint, 'device_file':disk.device}
         else:
