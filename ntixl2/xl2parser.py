@@ -29,6 +29,26 @@ def try_parse_float(s):
         return s
 
 
+def _parse_file(file_path, function_dict):
+    raw_sections = open(file_path).read().split('#')
+    sections = []
+    # Split up data into sections
+    for sec_id, section in enumerate(raw_sections):
+        if sec_id == 0: continue
+        lines = []
+        # Split up sections into lines to parse
+        for line in section.split('\n'):
+            lines.append(line.strip())
+        sections.append(lines)
+    sections.pop(len(sections) - 1)
+
+    dictionary = {}
+    for sec_id, section in enumerate(sections):
+        # Extract headline as dictionary key
+        section_headline = sections[sec_id].pop(0).strip()
+        dictionary[section_headline] = function_dict[sec_id](sections[sec_id])
+    return dictionary
+
 
 def parse_broadband_file(file_path):
     """
@@ -44,25 +64,36 @@ def parse_broadband_file(file_path):
         A dictionary organized in sections containing metadata and a section for measurements
 
     """
-    raw_sections = open(file_path).read().split('#')
-    sections = []
-    # Split up data into sections
-    for sec_id, section in enumerate(raw_sections):
-        if sec_id == 0: continue
-        lines = []
-        # Split up sections into lines to parse
-        for line in section.split('\n'):
-            lines.append(line.strip())
-        sections.append(lines)
-    sections.pop(len(sections)-1)
+    broadband_section_functions = {
+        0: _parse_info_section,
+        1: _parse_info_section,
+        2: _parse_time_section,
+        3: _parse_broadband_data_section,
+    }
+    return _parse_file(file_path, broadband_section_functions)
 
-    dictionary = {}
-    for sec_id, section in enumerate(sections):
-        # Extract headline as dictionary key
-        section_headline = sections[sec_id].pop(0).strip()
-        dictionary[section_headline] = broadband_section_functions[sec_id](sections[sec_id])
 
-    return dictionary
+def parse_spectrum_file(file_path):
+    """
+
+    Parameters
+    ----------
+    file_path
+        The location of the broadband recording file to be parsed
+
+    Returns
+    -------
+    dict
+        A dictionary organized in sections containing metadata and a section for measurements
+
+    """
+    spectrum_section_functions = {
+        0: _parse_info_section,
+        1: _parse_info_section,
+        2: _parse_time_section,
+        3: _parse_spectrum_data_section,
+    }
+    return _parse_file(file_path, spectrum_section_functions)
 
 
 def _parse_info_section(section):
@@ -108,16 +139,12 @@ def _parse_broadband_data_section(section):
     return samples
 
 
-broadband_section_functions = {
-    0: _parse_info_section,
-    1: _parse_info_section,
-    2: _parse_time_section,
-    3: _parse_broadband_data_section,
-}
-
-broadband_parse_instructions = {
-
-}
+def _parse_spectrum_data_section(section):
+    section[1] = section[1].replace('[dB]', 'Hz [dB]')
+    samples = _parse_broadband_data_section(section)
+    for sample in samples:
+        sample.pop('Band [Hz]',None)
+    return samples
 
 def logging_parser(file):
     """
