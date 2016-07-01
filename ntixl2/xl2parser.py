@@ -22,7 +22,7 @@ Note
 from datetime import datetime
 
 
-def try_parse_float(s):
+def __try_parse_float(s):
     try:
         return float(s)
     except ValueError:
@@ -35,10 +35,8 @@ def _parse_file(file_path, function_dict):
     # Split up data into sections
     for sec_id, section in enumerate(raw_sections):
         if sec_id == 0: continue
-        lines = []
         # Split up sections into lines to parse
-        for line in section.split('\n'):
-            lines.append(line.strip())
+        lines = [line.strip() for line in section.split('\n')]
         sections.append(lines)
     sections.pop(len(sections) - 1)
 
@@ -65,10 +63,10 @@ def parse_broadband_file(file_path):
 
     """
     broadband_section_functions = {
-        0: _parse_info_section,
-        1: _parse_info_section,
-        2: _parse_time_section,
-        3: _parse_broadband_data_section,
+        0: __parse_hardware_section,
+        1: __parse_measurement_setup_section,
+        2: __parse_time_section,
+        3: __parse_broadband_data_section,
     }
     return _parse_file(file_path, broadband_section_functions)
 
@@ -88,24 +86,48 @@ def parse_spectrum_file(file_path):
 
     """
     spectrum_section_functions = {
-        0: _parse_info_section,
-        1: _parse_info_section,
-        2: _parse_time_section,
-        3: _parse_spectrum_data_section,
+        0: __parse_hardware_section,
+        1: __parse_measurement_setup_section,
+        2: __parse_time_section,
+        3: __parse_spectrum_data_section,
     }
     return _parse_file(file_path, spectrum_section_functions)
 
 
-def _parse_info_section(section):
+def __swap_units(section, key):
+    value = section[key]
+    new_val = __try_parse_float(value.rsplit(' ', 1)[0])
+    new_key = "{0} [{1}]".format(key, value.rsplit(' ',1)[1])
+    section.pop(key, None)
+    section[new_key] = new_val
+    return section
+
+
+def __parse_hardware_section(section):
+    section_dict = __parse_info_section(section)
+    mic_sensitivity_key = 'Mic Sensitivity'
+    section_dict = __swap_units(section_dict, mic_sensitivity_key)
+    return section_dict
+
+
+def __parse_measurement_setup_section(section):
+    section_dict = __parse_info_section(section)
+    range_key = 'Range'
+    section_dict = __swap_units(section_dict, range_key)
+    section_dict[range_key + ' [dB]'] = section_dict[range_key + ' [dB]'].split(' - ')
+    return section_dict
+
+
+def __parse_info_section(section):
     section_dict = {}
     for line in section:
         splits = line.split('\t')
         if len(splits) != 2: continue
-        section_dict[splits[0].strip().replace(':','')] = splits[1].strip()
+        section_dict[splits[0].strip().replace(':','')] = __try_parse_float(splits[1].strip())
     return section_dict
 
 
-def _parse_time_section(section):
+def __parse_time_section(section):
     section_dict = {}
     for line in section:
         splits = line.split('\t')
@@ -114,7 +136,7 @@ def _parse_time_section(section):
     return section_dict
 
 
-def _parse_broadband_data_section(section):
+def __parse_broadband_data_section(section):
     line1 = section.pop(0).split('\t')
     line2 = section.pop(0).split('\t')
 
@@ -130,7 +152,7 @@ def _parse_broadband_data_section(section):
         if len(splits) < 3: continue
         sample = {}
         for idx,part in enumerate(splits):
-            sample[headers[idx]] = try_parse_float(part.strip())
+            sample[headers[idx]] = __try_parse_float(part.strip())
         samples.append(sample)
 
     for sample in samples:
@@ -139,11 +161,26 @@ def _parse_broadband_data_section(section):
     return samples
 
 
-def _parse_spectrum_data_section(section):
+def __parse_spectrum_data_section(section):
     section[1] = section[1].replace('[dB]', 'Hz [dB]')
-    samples = _parse_broadband_data_section(section)
+    samples = __parse_broadband_data_section(section)
     for sample in samples:
         sample.pop('Band [Hz]',None)
+    for sample in samples:
+        freq_vs_label = {}
+        for key in sample.keys():
+            if '[dB]'  in key:
+                freq_vs_label[__try_parse_float(key.split()[0])] = key
+        sample['Spectrum_Frequencies [Hz]'] = []
+        sample['Spectrum_LZeq_dt_f [dB]'] = []
+        sorted_keys = list(freq_vs_label.keys())
+        sorted_keys.sort()
+        for key in sorted_keys:
+            sample['Spectrum_Frequencies [Hz]'].append(key)
+            sample['Spectrum_LZeq_dt_f [dB]'].append(sample[freq_vs_label[key]])
+        for key in freq_vs_label.values():
+            sample.pop(key, None)
+
     return samples
 
 def logging_parser(file):
