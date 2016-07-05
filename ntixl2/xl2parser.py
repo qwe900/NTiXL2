@@ -29,7 +29,7 @@ def __try_parse_float(s):
         return s
 
 
-def _parse_file(file_path, function_dict):
+def __parse_file(file_path, function_dict):
     raw_sections = open(file_path).read().split('#')
     sections = []
     # Split up data into sections
@@ -68,7 +68,7 @@ def parse_broadband_file(file_path):
         2: __parse_time_section,
         3: __parse_broadband_data_section,
     }
-    return _parse_file(file_path, broadband_section_functions)
+    return __parse_file(file_path, broadband_section_functions)
 
 
 def parse_spectrum_file(file_path):
@@ -91,7 +91,7 @@ def parse_spectrum_file(file_path):
         2: __parse_time_section,
         3: __parse_spectrum_data_section,
     }
-    return _parse_file(file_path, spectrum_section_functions)
+    return __parse_file(file_path, spectrum_section_functions)
 
 
 def __swap_units(section, key):
