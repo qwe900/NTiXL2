@@ -145,7 +145,7 @@ def __parse_broadband_data_section(section):
     samples = []
 
     for idx, part in enumerate(line1):
-        headers.append(part.strip() + ('' if (idx >= len(line2) or idx <= 3) else ' ' + line2[idx].strip()))
+        headers.append(part.strip() + ('' if (idx >= len(line2) or idx <= 2) else ' ' + line2[idx].strip()))
 
     for line in section:
         splits = line.split('\t')
