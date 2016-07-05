@@ -200,7 +200,7 @@ class XL2SLM(object):
             if mnt['mounted']:
                 return 'MASS'
             else:
-                pass
+                return 'MASS'
                 # TODO: Handle this correctly, is wrong in _mount_status()
                 # raise XL2Error('Device not correct mounted')
         else:
