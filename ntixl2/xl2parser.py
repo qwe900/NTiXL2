@@ -114,7 +114,7 @@ def __parse_measurement_setup_section(section):
     section_dict = __parse_info_section(section)
     range_key = 'Range'
     section_dict = __swap_units(section_dict, range_key)
-    section_dict[range_key + ' [dB]'] = section_dict[range_key + ' [dB]'].split(' - ')
+    section_dict[range_key + ' [dB]'] = [__try_parse_float(val) for val in section_dict[range_key + ' [dB]'].split(' - ')]
     return section_dict
 
 
