@@ -77,6 +77,7 @@ Todo
 import os
 import time
 import subprocess
+import warnings
 import pathlib,shutil
 import serial
 from serial.tools import list_ports
@@ -248,8 +249,7 @@ class XL2SLM(object):
             self.conn.close()
             success,i = False,0
             time.sleep(10)
-            while not (success or i > 10):
-                i+=1
+            while not success:
                 time.sleep(2)
                 try:
                     status = self.device_status
@@ -257,6 +257,10 @@ class XL2SLM(object):
                     success = False
                 else:
                     success = (status == 'MASS')
+                if i >20:
+                    warnings.warn("timeout", UserWarning)
+                    break
+                i += 1
         elif status == 'MASS':
             print("XL2 already in 'MASS' status ")
 
@@ -275,7 +279,7 @@ class XL2SLM(object):
             safe_remove_mass_storage_device(str(self.storageDev), str(self.mountDir))
             success,i = False,0
             time.sleep(10)
-            while not (success or i > 10):
+            while not success:
                 i+=1
                 time.sleep(2)
                 try:
@@ -284,6 +288,9 @@ class XL2SLM(object):
                     success = False
                 else:
                     success = (status == 'SERIAL')
+                if i > 20:
+                    warnings.warn("timeout", UserWarning)
+                    break
         elif status == 'SERIAL':
             print("XL2 already in 'SERIAL' status ")
 
