@@ -3,20 +3,6 @@
 
 The NTiXL2 device save report and logging files in .txt format.
 
-
-Todo
-----
-
-    - Create parsing function
-    - return should be a :obj:`dict` data structure containing data and measurements metadata
-    - consider use of `datetime` for date and time objects.
-    - consider use of `pandas` for timeseries or nupyarray for simple arrays
-
-Note
-----
-
-    - keep it as simple as possible (function where classes are not needed)
-
 """
 
 from datetime import datetime
@@ -182,29 +168,3 @@ def __parse_spectrum_data_section(section):
             sample.pop(key, None)
 
     return samples
-
-def logging_parser(file):
-    """
-
-    Parameters
-    ----------
-    file
-
-    Returns
-    -------
-
-    """
-    pass
-
-def logging_SLA_parser(file):
-    """
-
-    Parameters
-    ----------
-    file
-
-    Returns
-    -------
-
-    """
-    pass
