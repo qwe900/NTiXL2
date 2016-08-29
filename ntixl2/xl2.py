@@ -278,7 +278,7 @@ class XL2SLM(object):
         if status == 'MASS':
             safe_remove_mass_storage_device(str(self.storageDev), str(self.mountDir))
             success,i = False,0
-            time.sleep(10)
+            time.sleep(20)
             while not success:
                 i+=1
                 time.sleep(2)
