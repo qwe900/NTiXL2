@@ -78,7 +78,6 @@ import os
 import time
 import subprocess
 import pathlib,shutil
-import psutil#, pyudev
 import serial
 from serial.tools import list_ports
 from .message import ECHO, SYSTEM_MSDMAC,RESET, SYSTEM_KEY, QUERY_SYSTEM_ERROR, QUERY_IDN, \
@@ -248,10 +247,10 @@ class XL2SLM(object):
                 print("Serial connection is broken.")
             self.conn.close()
             success,i = False,0
-            time.sleep(4)
-            while not (success or i > 20):
+            time.sleep(10)
+            while not (success or i > 10):
                 i+=1
-                time.sleep(1)
+                time.sleep(2)
                 try:
                     status = self.device_status
                 except XL2Error:
@@ -275,10 +274,10 @@ class XL2SLM(object):
         if status == 'MASS':
             safe_remove_mass_storage_device(str(self.storageDev), str(self.mountDir))
             success,i = False,0
-            time.sleep(3)
-            while not (success or i > 20):
+            time.sleep(10)
+            while not (success or i > 10):
                 i+=1
-                time.sleep(1)
+                time.sleep(2)
                 try:
                     status = self.device_status
                 except XL2Error:
@@ -350,20 +349,6 @@ class XL2SLM(object):
             return [str(p) for p in path.glob('*') if p.is_dir()]
         else:
             raise XL2Error('device_status has to be MASS.')
-
-    # def copy_file(self,filePath, wherePath = '/home/pi-rbl', filename = None):
-    #     if self.device_status=='MASS':
-    #         filePath = self.mountDir.joinpath(filePath)
-    #         if not(filePath.exists() and filePath.is_file()):
-    #             print('The specified file does not exists')
-    #             return None
-    #         wherePath=pathlib.Path(wherePath)
-    #         if not wherePath.is_dir():
-    #             wherePath.mkdir(parents=True)
-    #         to = wherePath.joinpath(filePath.name) if filename is None else wherePath.joinpath(filePath.name)
-    #         return shutil.copyfile(str(filePath), str(to), follow_symlinks=True)
-    #     else:
-    #         print('device_status has to be MASS.')
 
     def serial_message(self, message, wait = 5):
         """
