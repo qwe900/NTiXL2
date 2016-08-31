@@ -12,4 +12,4 @@ from ntixl2.message import *
 
 #####################
 print("initiate XL2 object as xl2")
-xl2 = XL2SLM()
+xl2 = XL2SLM(mountDir='/home/pi-rbl/XL2-sd')

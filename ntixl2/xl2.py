@@ -126,7 +126,7 @@ class XL2SLM(object):
 
     """
 
-    def __init__(self, serialDev='/dev/XL2', storageDev = '/dev/XL2-sd', mountDir = '/media/XL2-sd'):
+    def __init__(self,mountDir,  serialDev='/dev/XL2', storageDev = '/dev/XL2-sd'):
         """Initiate
 
         Parameters
@@ -248,9 +248,9 @@ class XL2SLM(object):
                 print("Serial connection is broken.")
             self.conn.close()
             success,i = False,0
-            time.sleep(10)
+            time.sleep(20)
             while not success:
-                time.sleep(2)
+                time.sleep(5)
                 try:
                     status = self.device_status
                 except XL2Error:
@@ -278,10 +278,10 @@ class XL2SLM(object):
         if status == 'MASS':
             safe_remove_mass_storage_device(str(self.storageDev), str(self.mountDir))
             success,i = False,0
-            time.sleep(20)
+            time.sleep(30)
             while not success:
                 i+=1
-                time.sleep(2)
+                time.sleep(5)
                 try:
                     status = self.device_status
                 except XL2Error:
