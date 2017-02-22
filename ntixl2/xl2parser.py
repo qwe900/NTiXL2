@@ -7,34 +7,28 @@ The NTiXL2 device save report and logging files in .txt format.
 
 from datetime import datetime
 
-
-def __try_parse_float(s):
-    try:
-        return float(s)
-    except ValueError:
-        return s
-
-
 def __parse_file(file_path, function_dict):
-    raw_sections = open(file_path).read().split('#')
-    sections = []
     # Split up data into sections
-    for sec_id, section in enumerate(raw_sections):
-        if sec_id == 0: continue
+    raw_sections = open(file_path).read().split('#')
+
+    sections = {}
+    first_line = raw_sections.pop(0).split('\n')[0].split('\t')
+    sections['Title'] = first_line[0][:-1]
+    sections['Measurement'] = {'file':((first_line[2]).split("\\")[1]).strip()}
+
+    for section in raw_sections:
         # Split up sections into lines to parse
-        lines = [line.strip() for line in section.split('\n')]
-        sections.append(lines)
-    sections.pop(len(sections) - 1)
+        lines = [line for line in section.split('\n\t')]
+        section_title = lines.pop(0).strip()
+        sections[section_title] = lines
 
-    dictionary = {}
-    for sec_id, section in enumerate(sections):
-        # Extract headline as dictionary key
-        section_headline = sections[sec_id].pop(0).strip()
-        dictionary[section_headline] = function_dict[sec_id](sections[sec_id])
-    return dictionary
+    for key,function in function_dict.items():
+        sections[key] = function(sections[key])
+    sections['Measurement'].update(sections.pop('Time'))
 
+    return sections
 
-def parse_broadband_file(file_path):
+def parse_broadband_file(file_path,options={}):
     """
 
     Parameters
@@ -48,123 +42,145 @@ def parse_broadband_file(file_path):
         A dictionary organized in sections containing metadata and a section for measurements
 
     """
-    broadband_section_functions = {
-        0: __parse_hardware_section,
-        1: __parse_measurement_setup_section,
-        2: __parse_time_section,
-        3: __parse_broadband_data_section,
+    broadband_section_functions = {"Hardware Configuration": __parse_hardware_section,
+                                   "Measurement Setup": __parse_measurement_setup_section,
+                                   "Time": __parse_time_section,
+                                   "Broadband LOG Results": __parse_broadband_data_section,
     }
+
     return __parse_file(file_path, broadband_section_functions)
 
 
-def parse_spectrum_file(file_path):
-    """
+# def parse_spectrum_file(file_path):
+#     """
+#
+#     Parameters
+#     ----------
+#     file_path
+#         The location of the broadband recording file to be parsed
+#
+#     Returns
+#     -------
+#     dict
+#         A dictionary organized in sections containing metadata and a section for measurements
+#
+#     """
+#     spectrum_section_functions = { "Hardware Configuration": __parse_hardware_section,
+#                                    "Measurement Setup": __parse_measurement_setup_section,
+#                                    "Time": __parse_time_section,
+#                                    "sPECTRUM LOG Results": __parse_broadband_data_section,
+#     }
+#     return __parse_file(file_path, spectrum_section_functions)
 
-    Parameters
-    ----------
-    file_path
-        The location of the broadband recording file to be parsed
-
-    Returns
-    -------
-    dict
-        A dictionary organized in sections containing metadata and a section for measurements
-
-    """
-    spectrum_section_functions = {
-        0: __parse_hardware_section,
-        1: __parse_measurement_setup_section,
-        2: __parse_time_section,
-        3: __parse_spectrum_data_section,
-    }
-    return __parse_file(file_path, spectrum_section_functions)
-
-
-def __swap_units(section, key):
-    value = section[key]
-    new_val = __try_parse_float(value.rsplit(' ', 1)[0])
-    new_key = "{0} [{1}]".format(key, value.rsplit(' ',1)[1])
-    section.pop(key, None)
-    section[new_key] = new_val
-    return section
+def __parse_hardware_section(section_lines):
+    splitted_lines = [l.split('\t') for l in section_lines if l  is not ""]
+    hardware_dict = {k.strip().replace(':',''): v.strip()  for k,v in splitted_lines }
+    value, unit = hardware_dict.pop('Mic Sensitivity').split(" ")
+    hardware_dict['Mic Sensitivity[{}]'.format(unit)] = float(value)
+    return hardware_dict
 
 
-def __parse_hardware_section(section):
-    section_dict = __parse_info_section(section)
-    mic_sensitivity_key = 'Mic Sensitivity'
-    section_dict = __swap_units(section_dict, mic_sensitivity_key)
-    return section_dict
+def __parse_measurement_setup_section(section_lines):
+    splitted_lines = [l.split('\t') for l in section_lines if l  is not ""]
+    setup_dict = {k.strip().replace(':',''): v.strip()  for k,v in splitted_lines }
+
+    value1,_,value2, unit = setup_dict.pop('Range').split(" ")
+    setup_dict['Range[{}]'.format(unit)] = [float(value1), float(value2)]
+    return setup_dict
 
 
-def __parse_measurement_setup_section(section):
-    section_dict = __parse_info_section(section)
-    range_key = 'Range'
-    section_dict = __swap_units(section_dict, range_key)
-    section_dict[range_key + ' [dB]'] = [__try_parse_float(val) for val in section_dict[range_key + ' [dB]'].split(' - ')]
-    return section_dict
-
-
-def __parse_info_section(section):
+def __parse_time_section(section_lines):
     section_dict = {}
-    for line in section:
-        splits = line.split('\t')
-        if len(splits) != 2: continue
-        section_dict[splits[0].strip().replace(':','')] = __try_parse_float(splits[1].strip())
-    return section_dict
-
-
-def __parse_time_section(section):
-    section_dict = {}
-    for line in section:
+    for line in section_lines:
         splits = line.split('\t')
         if len(splits) != 2: continue
         section_dict[splits[0].strip().replace(':', '')] = datetime.strptime(splits[1].strip(), '%Y-%m-%d, %H:%M:%S')  # format to match: 2016-06-28, 20:05:08
     return section_dict
 
+def __line_to_row_list(line):
+    return [__try_parse_cell_content(e.strip()) for e in line.split('\t')]
 
-def __parse_broadband_data_section(section):
-    line1 = section.pop(0).split('\t')
-    line2 = section.pop(0).split('\t')
+def __try_parse_cell_content(s):
+    if s == "":
+        return None
+    else:
+        try:
+            return int(s)
+        except:
+            try:
+                return float(s)
+            except :
+                return s
 
-    headers = []
+def __parse_broadband_data_section(section_lines):
+    colnames = __line_to_row_list(section_lines.pop(0))
+    num_cols= len(colnames)
+    units = __line_to_row_list(section_lines.pop(0))
+    if 'Pause' in colnames:
+        units[colnames.index('Pause')] = "[?]" # to correct the missing PAUSE unit
 
-    samples = []
+    assert len(units)==num_cols
 
-    for idx, part in enumerate(line1):
-        headers.append(part.strip() + ('' if (idx >= len(line2) or idx <= 2) else ' ' + line2[idx].strip()))
+    headers = ["{}{}".format(c,u) for c,u in zip(colnames, units)]
 
-    for line in section:
-        splits = line.split('\t')
-        if len(splits) < 3: continue
-        sample = {}
-        for idx,part in enumerate(splits):
-            sample[headers[idx]] = __try_parse_float(part.strip())
-        samples.append(sample)
+    #samples
+    samples = {}
+    samples_header_index = list(range(len(headers)))
 
-    for sample in samples:
-        timestamp_string = sample['Date'] + ', ' + sample['Time']
-        sample['Timestamp'] = datetime.strptime(timestamp_string, '%Y-%m-%d, %H:%M:%S') # format to match: 2016-06-28, 20:05:08
-    return samples
+    date_index = headers.index('Date[YYYY-MM-DD]')
+    time_index = headers.index('Time[hh:mm:ss]')
 
+    #events handling
+    ev_header_index = {h:headers.index(h) for h in ['Evt_No[INT]','Evt_Duration[Sec]','Evt_WaveFile[TXT]'] if h in headers}
+    event = len(ev_header_index)!=0
+    #remove events columns from output
+    events_headers =['Evt_Duration[Sec]', 'Evt_WaveFile[TXT]']
+    events = {}
 
-def __parse_spectrum_data_section(section):
-    section[1] = section[1].replace('[dB]', 'Hz [dB]')
-    samples = __parse_broadband_data_section(section)
-    for sample in samples:
-        sample.pop('Band [Hz]',None)
-    for sample in samples:
-        freq_vs_label = {}
-        for key in sample.keys():
-            if '[dB]'  in key:
-                freq_vs_label[__try_parse_float(key.split()[0])] = key
-        sample['Spectrum_Frequencies [Hz]'] = []
-        sample['Spectrum_LZeq_dt_f [dB]'] = []
-        sorted_keys = list(freq_vs_label.keys())
-        sorted_keys.sort()
-        for key in sorted_keys:
-            sample['Spectrum_Frequencies [Hz]'].append(key)
-            sample['Spectrum_LZeq_dt_f [dB]'].append(sample[freq_vs_label[key]])
-        for key in freq_vs_label.values():
-            sample.pop(key, None)
+    #samples headers
+    for k in ['Date[YYYY-MM-DD]','Time[hh:mm:ss]','Timer[hh:mm:ss]','Evt_Duration[Sec]','Evt_WaveFile[TXT]']:
+        samples_header_index.remove(headers.index(k))
+    ##
+    for line in section_lines:
+        elements = __line_to_row_list(line)
 
-    return samples
+        #compute timestamp
+        date = datetime.strptime(elements[date_index], '%Y-%m-%d').date()
+        time = datetime.strptime(elements[time_index], '%H:%M:%S').time()
+        timestamp = datetime.combine(date,time)
+
+        samples[timestamp] = [elements[i] for i in samples_header_index ]
+
+        #events
+        wav_path = elements[ev_header_index['Evt_WaveFile[TXT]']]
+        if event  and (wav_path is not None):
+            event_n =  elements[ev_header_index['Evt_No[INT]']]
+            event_duration = elements[ev_header_index['Evt_Duration[Sec]']]
+            events[event_n] = [event_duration, wav_path]
+
+    return {"samples":([headers[i] for i in  samples_header_index],samples),
+            "events":(events_headers, events)
+            }
+#
+#
+# def __parse_spectrum_data_section(section):
+#     section[1] = section[1].replace('[dB]', 'Hz [dB]')
+#     samples = __parse_broadband_data_section(section)
+#     for sample in samples:
+#         sample.pop('Band [Hz]',None)
+#     for sample in samples:
+#         freq_vs_label = {}
+#         for key in sample.keys():
+#             if '[dB]'  in key:
+#                 freq_vs_label[__try_parse_cell_content(key.split()[0])] = key
+#         sample['Spectrum_Frequencies [Hz]'] = []
+#         sample['Spectrum_LZeq_dt_f [dB]'] = []
+#         sorted_keys = list(freq_vs_label.keys())
+#         sorted_keys.sort()
+#         for key in sorted_keys:
+#             sample['Spectrum_Frequencies [Hz]'].append(key)
+#             sample['Spectrum_LZeq_dt_f [dB]'].append(sample[freq_vs_label[key]])
+#         for key in freq_vs_label.values():
+#             sample.pop(key, None)
+#
+#     return samples
