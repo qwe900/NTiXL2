@@ -491,7 +491,8 @@ class XL2SLM(object):
 
 def find_xl2(linux = True, filter= "XL2"):
     """
-    listet alle vorhandene serielle Ports welches Gerät Beschreibung enthalten die string  'filter'
+    listet alle vorhandene serielle Ports welches Geraet Beschreibung enthalten die string  'filter'
+    
     :param linux:
     :param filter: string
     :return: liste aus dict mit serielle ports attributen
